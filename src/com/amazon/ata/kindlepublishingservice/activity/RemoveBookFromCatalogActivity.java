@@ -2,8 +2,9 @@ package com.amazon.ata.kindlepublishingservice.activity;
 
 import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
-import com.amazonaws.services.lambda.runtime.Context;
 
+import java.util.List;
+import java.util.ListIterator;
 import javax.inject.Inject;
 
 public class RemoveBookFromCatalogActivity {
