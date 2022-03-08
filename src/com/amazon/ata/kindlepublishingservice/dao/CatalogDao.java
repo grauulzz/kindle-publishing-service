@@ -7,6 +7,8 @@ import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import java.util.ArrayList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import javax.inject.Inject;
 
 public class CatalogDao {
 
-    private final DynamoDBMapper dynamoDbMapper;
+    private static DynamoDBMapper dynamoDbMapper;
 
     /**
      * Instantiates a new CatalogDao object.
@@ -23,7 +25,7 @@ public class CatalogDao {
      */
     @Inject
     public CatalogDao(DynamoDBMapper dynamoDbMapper) {
-        this.dynamoDbMapper = dynamoDbMapper;
+        CatalogDao.dynamoDbMapper = dynamoDbMapper;
     }
 
     /**
@@ -58,4 +60,24 @@ public class CatalogDao {
         }
         return results.get(0);
     }
+
+    public static List<CatalogItemVersion> getAllBooksFromCatalog() {
+        return dynamoDbMapper.scan(CatalogItemVersion.class, new DynamoDBScanExpression());
+    }
+
+    public static void removeInactiveBooks() {
+        List<CatalogItemVersion> books = new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
+                new DynamoDBScanExpression().withFilterExpression("inactive = :inactive")));
+
+        books.stream().filter(CatalogItemVersion::isInactive)
+                .forEach(book -> dynamoDbMapper.delete(book));
+//        for (CatalogItemVersion book : books) {
+//            if (book.isInactive()) {
+//                dynamoDbMapper.delete(book);
+//            }
+//        }
+    }
 }
+
+//        List<CatalogItemVersion> books = dynamoDbMapper.scan(CatalogItemVersion.class,
+//                new DynamoDBScanExpression());

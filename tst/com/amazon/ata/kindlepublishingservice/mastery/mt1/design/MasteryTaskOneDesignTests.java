@@ -106,12 +106,12 @@ public class MasteryTaskOneDesignTests {
     void mt1Design_getClassDiagram_daosContainDynamoDBMapper(String type) {
         // Testing different capitalization of the DynamoDBMapper
         boolean containsDynamoDBMapper = classDiagramTypeContainsMember(
-                content, type,  "dynamoDBMapper\\s*:\\sDynamoDBMapper");
+                content, type, "dynamoDBMapper\\s*:\\sDynamoDBMapper");
         boolean containsDynamoDbMapper = classDiagramTypeContainsMember(
-                content, type,  "dynamoDbMapper\\s*:\\sDynamoDBMapper");
+                content, type, "dynamoDbMapper\\s*:\\sDynamoDBMapper");
         assertTrue(containsDynamoDBMapper || containsDynamoDbMapper,
                 String.format("In class diagram, %s might be missing the DynamoDBMapper member variable, " +
-                        "or it may be formatted incorrectly, expecting `variableName : type`.", type));
+                                      "or it may be formatted incorrectly, expecting `variableName : type`.", type));
     }
 
     @ParameterizedTest
