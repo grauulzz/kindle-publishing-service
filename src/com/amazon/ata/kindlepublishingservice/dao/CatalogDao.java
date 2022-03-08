@@ -5,10 +5,12 @@ import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import java.util.ArrayList;
+import java.util.Collections;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import javax.inject.Inject;
 public class CatalogDao {
 
     private static DynamoDBMapper dynamoDbMapper;
+    private static List<CatalogItemVersion> catalogItems;
 
     /**
      * Instantiates a new CatalogDao object.
@@ -26,6 +29,18 @@ public class CatalogDao {
     @Inject
     public CatalogDao(DynamoDBMapper dynamoDbMapper) {
         CatalogDao.dynamoDbMapper = dynamoDbMapper;
+        catalogItems = new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
+                new DynamoDBScanExpression()));
+    }
+
+    private static List<CatalogItemVersion> getCatalogItems() {
+        return Collections.unmodifiableList(catalogItems);
+    }
+
+    private static List<CatalogItemVersion> filterCatalogItemsByInactive() {
+        return new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
+                new DynamoDBScanExpression()
+                        .withFilterExpression("inactive = :inactive")));
     }
 
     /**
@@ -37,7 +52,7 @@ public class CatalogDao {
     public CatalogItemVersion getBookFromCatalog(String bookId) {
         CatalogItemVersion book = getLatestVersionOfBook(bookId);
 
-        if (book == null || book.isInactive()) {
+        if ((book == null) || book.isInactive()) {
             throw new BookNotFoundException(String.format("No book found for id: %s", bookId));
         }
 
@@ -49,35 +64,29 @@ public class CatalogDao {
         CatalogItemVersion book = new CatalogItemVersion();
         book.setBookId(bookId);
 
-        DynamoDBQueryExpression<CatalogItemVersion> queryExpression = new DynamoDBQueryExpression()
-            .withHashKeyValues(book)
-            .withScanIndexForward(false)
-            .withLimit(1);
+        DynamoDBQueryExpression<CatalogItemVersion> queryExpression = new DynamoDBQueryExpression<CatalogItemVersion>()
+                .withHashKeyValues(book)
+                .withScanIndexForward(false)
+                .withLimit(1);
 
-        List<CatalogItemVersion> results = dynamoDbMapper.query(CatalogItemVersion.class, queryExpression);
+        List<CatalogItemVersion> results = dynamoDbMapper.query(CatalogItemVersion.class,
+                queryExpression);
         if (results.isEmpty()) {
             return null;
         }
         return results.get(0);
     }
 
+
+
     public static List<CatalogItemVersion> getAllBooksFromCatalog() {
-        return dynamoDbMapper.scan(CatalogItemVersion.class, new DynamoDBScanExpression());
+        return new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
+                new DynamoDBScanExpression()
+                        .withFilterExpression("bookId = :bookId")));
     }
 
-    public static void removeInactiveBooks() {
-        List<CatalogItemVersion> books = new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
-                new DynamoDBScanExpression().withFilterExpression("inactive = :inactive")));
-
+    public static void deleteInactiveBooks(List<CatalogItemVersion> books) {
         books.stream().filter(CatalogItemVersion::isInactive)
                 .forEach(book -> dynamoDbMapper.delete(book));
-//        for (CatalogItemVersion book : books) {
-//            if (book.isInactive()) {
-//                dynamoDbMapper.delete(book);
-//            }
-//        }
     }
 }
-
-//        List<CatalogItemVersion> books = dynamoDbMapper.scan(CatalogItemVersion.class,
-//                new DynamoDBScanExpression());
