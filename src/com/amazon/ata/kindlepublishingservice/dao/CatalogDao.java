@@ -1,25 +1,24 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
+import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
+import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
-import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
-import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import java.util.ArrayList;
-import java.util.Collections;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class CatalogDao {
 
-    private static DynamoDBMapper dynamoDbMapper;
-    private static List<CatalogItemVersion> catalogItems;
+    private final DynamoDBMapper dynamoDbMapper;
 
     /**
      * Instantiates a new CatalogDao object.
@@ -28,16 +27,28 @@ public class CatalogDao {
      */
     @Inject
     public CatalogDao(DynamoDBMapper dynamoDbMapper) {
-        CatalogDao.dynamoDbMapper = dynamoDbMapper;
-        catalogItems = new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
-                new DynamoDBScanExpression()));
+        this.dynamoDbMapper = dynamoDbMapper;
     }
 
-    private static List<CatalogItemVersion> getCatalogItems() {
-        return Collections.unmodifiableList(catalogItems);
+    public List<CatalogItemVersion> getCatalogItems() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(
+                new ScanRequest("CatalogItemVersions"));
+
+        return result.getItems().stream()
+                .map(item -> dynamoDbMapper.marshallIntoObject(CatalogItemVersion.class, item))
+                .collect(Collectors.toList());
+
     }
 
-    private static List<CatalogItemVersion> filterCatalogItemsByInactive() {
+    public CatalogItemVersion getCatalogItem(String id) {
+        CatalogItemVersion catalogItem = dynamoDbMapper.load(CatalogItemVersion.class, id);
+        if (catalogItem == null) {
+            throw new BookNotFoundException("Book with ISBN " + id + " not found.");
+        }
+        return catalogItem;
+    }
+
+    private List<CatalogItemVersion> filterCatalogItemsByInactive() {
         return new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
                 new DynamoDBScanExpression()
                         .withFilterExpression("inactive = :inactive")));
@@ -60,7 +71,7 @@ public class CatalogDao {
     }
 
     // Returns null if no version exists for the provided bookId
-    private CatalogItemVersion getLatestVersionOfBook(String bookId) {
+    public CatalogItemVersion getLatestVersionOfBook(String bookId) {
         CatalogItemVersion book = new CatalogItemVersion();
         book.setBookId(bookId);
 
@@ -77,16 +88,16 @@ public class CatalogDao {
         return results.get(0);
     }
 
-
-
-    public static List<CatalogItemVersion> getAllBooksFromCatalog() {
-        return new ArrayList<>(dynamoDbMapper.scan(CatalogItemVersion.class,
-                new DynamoDBScanExpression()
-                        .withFilterExpression("bookId = :bookId")));
-    }
-
-    public static void deleteInactiveBooks(List<CatalogItemVersion> books) {
+    public void deleteInactiveBooks(List<CatalogItemVersion> books) {
         books.stream().filter(CatalogItemVersion::isInactive)
                 .forEach(book -> dynamoDbMapper.delete(book));
+    }
+
+    public void saveItem(CatalogItemVersion version) {
+        dynamoDbMapper.save(version);
+    }
+
+    public DynamoDBMapper getDbMapper() {
+        return dynamoDbMapper;
     }
 }

@@ -32,8 +32,11 @@ public class Controller {
     @DeleteMapping(value = "/books/{id}")
     public ResponseEntity<?> removeBook(@PathVariable String id) {
         RemoveBookFromCatalogActivity removeBookFromCatalogActivity = component.provideRemoveBookFromCatalogActivity();
-        RemoveBookFromCatalogRequest removeBookFromCatalogRequest = RemoveBookFromCatalogRequest.builder().withBookId(id).build();
-        return new ResponseEntity<>(removeBookFromCatalogActivity.execute(removeBookFromCatalogRequest), HttpStatus.OK);
+        RemoveBookFromCatalogRequest removeBookFromCatalogRequest = RemoveBookFromCatalogRequest.builder()
+                .withBookId(id)
+                .build();
+        return new ResponseEntity<>(removeBookFromCatalogActivity
+                .execute(removeBookFromCatalogRequest), HttpStatus.OK);
     }
 
     @PostMapping(value = "/books", consumes = {"application/json"}, produces = {"application/json"})
