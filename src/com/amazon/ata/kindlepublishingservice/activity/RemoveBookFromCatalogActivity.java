@@ -7,21 +7,26 @@ import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import javax.inject.Inject;
 
 public class RemoveBookFromCatalogActivity {
 
-    private final CatalogDao catalogDao = App.component.provideCatalogDao();
+    private final CatalogDao catalogDao;
 
     @Inject
     public RemoveBookFromCatalogActivity() {
+        this.catalogDao = App.component.provideCatalogDao();
     }
 
     public RemoveBookFromCatalogResponse execute(RemoveBookFromCatalogRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request cannot be null");
+        }
         CatalogItemVersion catalogItemVersion = catalogDao.getBookFromCatalog(request.getBookId());
         try {
             CatalogItemVersion latestVersion = catalogDao.getLatestVersionOfBook(request.getBookId());
-            latestVersion.setInactive(false);
+            latestVersion.setInactive(true);
             catalogDao.saveItem(latestVersion);
         } catch (BookNotFoundException e) {
            throw new BookNotFoundException("Book not found in catalog" + e);

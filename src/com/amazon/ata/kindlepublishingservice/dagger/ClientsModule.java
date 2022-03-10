@@ -25,7 +25,7 @@ public class ClientsModule {
     @Singleton
     @Provides
     public CatalogDao provideCatalogDao() {
-        return new CatalogDao(new DynamoDBMapper(DynamoDbClientProvider.getDynamoDBClient()));
+        return new CatalogDao(DaggerApplicationComponent.create().provideDynamoDBMapper());
     }
 
 }
