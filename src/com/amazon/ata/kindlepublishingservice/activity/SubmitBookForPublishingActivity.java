@@ -1,5 +1,9 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
+import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
+import com.amazon.ata.kindlepublishingservice.App;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
+import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
@@ -9,8 +13,12 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusIt
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
@@ -49,13 +57,28 @@ public class SubmitBookForPublishingActivity {
 
         // TODO: If there is a book ID in the request, validate it exists in our catalog
         // TODO: Submit the BookPublishRequest for processing
+        if (StringUtils.isNotBlank(request.getBookId())) {
+            getCatalogItems().stream().filter(item -> item.getBookId().equals(request.getBookId()))
+                    .findFirst().orElseThrow(() -> new BookNotFoundException(request.getBookId()));
+        }
 
-        PublishingStatusItem item =  publishingStatusDao.setPublishingStatus(bookPublishRequest.getPublishingRecordId(),
+        PublishingStatusItem item =  publishingStatusDao.setPublishingStatus(
+                bookPublishRequest.getPublishingRecordId(),
                 PublishingRecordStatus.QUEUED,
                 bookPublishRequest.getBookId());
 
         return SubmitBookForPublishingResponse.builder()
                 .withPublishingRecordId(item.getPublishingRecordId())
                 .build();
+    }
+
+    public List<CatalogItemVersion> getCatalogItems() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(
+                new ScanRequest("CatalogItemVersions"));
+
+        return result.getItems().stream()
+                .map(item -> App.component.provideDynamoDBMapper().marshallIntoObject(CatalogItemVersion.class,
+                        item))
+                .collect(Collectors.toList());
     }
 }

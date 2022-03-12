@@ -4,16 +4,19 @@ import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
 import com.amazon.ata.kindlepublishingservice.converters.CatalogItemConverter;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
+import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.Book;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDeleteExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.transform.ScanResultJsonUnmarshaller;
+import com.amazonaws.transform.JsonUnmarshallerContext;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import javax.swing.table.TableModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +24,6 @@ class DbTest {
     private final DynamoDBMapper mapper = new DynamoDBMapper(DynamoDbClientProvider.getDynamoDBClient());
     private CatalogItemVersion catalogItemVersion;
     private final String exsitingId = "book.ac510a76-008c-4478-b9f3-c277d74fa305";
-    String nonExistingId = "book.nonExistingId";
-    private final Book book = new Book(Book.builder().withBookId(exsitingId));
-    private Book catalogToBook;
 
 
     @BeforeEach
@@ -36,22 +36,12 @@ class DbTest {
         catalogItemVersion.setGenre(BookGenre.AUTOBIOGRAPHY);
         catalogItemVersion.setVersion(1);
         catalogItemVersion.setInactive(false);
-        catalogToBook = CatalogItemConverter.toBook(catalogItemVersion);
     }
 
     private static void print(String input) {
         String reset = "\u001B[31m";
         String teal = "\u001B[36m";
         System.out.printf("%s%s%s\n", teal, input, reset);
-
-    }
-
-    private static void shitJsonFormatter(String consoleOut) {
-        Arrays.stream(new String[]{new GsonBuilder().disableHtmlEscaping()
-                        .create().toJson( consoleOut)
-                                           .replaceAll("[\\[]",
-                        String.format("%s%s", "\n [", "\u001B[36m"))})
-                .forEach(System.out::println);
     }
 
     @Test
@@ -77,17 +67,25 @@ class DbTest {
         List<String> catalogItemIdList = items.stream().map(item -> item.get("bookId")
                 .getS()).collect(Collectors.toList());
 
-        print(catalogItemIdList.toString());
-    }
+        List<String> catalogItemAuthorList = items.stream().map(item -> item.get("author")
+                .getS()).collect(Collectors.toList());
 
-    @Test
-    void filterItemsByBookId() {
-        ScanRequest scanRequest = new ScanRequest("CatalogItemVersions");
-        scanRequest.addScanFilterEntry("bookId", new Condition()
-                .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(exsitingId)));
-        ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(scanRequest);
-        print(result.toString());
+        List<Map<String, AttributeValue>> catalogItemAuthorAndIdList = items.stream().map(item -> {
+            Map<String, AttributeValue> map = new HashMap<>();
+            map.put("bookId", item.get("bookId"));
+            map.put("author", item.get("author"));
+            map.put("title", item.get("title"));
+            map.put("text", item.get("text"));
+            map.put("genre", item.get("genre"));
+            map.put("version", item.get("version"));
+            map.put("inactive", item.get("inactive"));
+            return map;
+        }).collect(Collectors.toList());
+
+
+        print(catalogItemIdList.toString());
+        print(catalogItemAuthorList.toString());
+        print(catalogItemAuthorAndIdList.toString());
     }
 
     @Test
@@ -167,9 +165,26 @@ class DbTest {
             Map<String, ExpectedAttributeValue> expected = new HashMap<>();
             expected.put("inactive", new ExpectedAttributeValue(new AttributeValue().withBOOL(false)));
             deleteExpression.setExpected(expected);
-            mapper.delete(book, deleteExpression);
+            mapper.delete(catalogItemVersion, deleteExpression);
         } catch (ConditionalCheckFailedException e) {
             System.out.println(e);
         }
     }
+
+    @Test
+    void testStuff() {
+
+        Map<String, AttributeValue> convertToMapAttribute = mapper.getTableModel(CatalogItemVersion.class)
+                .convert(catalogItemVersion);
+
+        CatalogItemVersion catalogItemMarshall = mapper.marshallIntoObject(CatalogItemVersion.class,
+                convertToMapAttribute);
+
+        print(convertToMapAttribute.toString());
+        print(catalogItemMarshall.toString());
+
+    }
+
+
+
 }

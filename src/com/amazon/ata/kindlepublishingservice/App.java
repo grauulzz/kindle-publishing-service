@@ -4,12 +4,15 @@ import com.amazon.ata.kindlepublishingservice.dagger.ATAKindlePublishingServiceM
 import com.amazon.ata.kindlepublishingservice.dagger.ApplicationComponent;
 import com.amazon.ata.kindlepublishingservice.dagger.DaggerApplicationComponent;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class App {
     public static final ApplicationComponent component = DaggerApplicationComponent.create();
+    public static Logger logger;
+
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
 
