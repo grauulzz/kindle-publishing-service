@@ -31,7 +31,7 @@ import javax.inject.Inject;
  */
 public class SubmitBookForPublishingActivity {
 
-    private PublishingStatusDao publishingStatusDao;
+    private final PublishingStatusDao publishingStatusDao;
 
     /**
      * Instantiates a new SubmitBookForPublishingActivity object.
@@ -53,10 +53,8 @@ public class SubmitBookForPublishingActivity {
      * to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
-        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
 
-        // TODO: If there is a book ID in the request, validate it exists in our catalog
-        // TODO: Submit the BookPublishRequest for processing
         if (StringUtils.isNotBlank(request.getBookId())) {
             getCatalogItems().stream().filter(item -> item.getBookId().equals(request.getBookId()))
                     .findFirst().orElseThrow(() -> new BookNotFoundException(request.getBookId()));
@@ -72,7 +70,7 @@ public class SubmitBookForPublishingActivity {
                 .build();
     }
 
-    public List<CatalogItemVersion> getCatalogItems() {
+    private List<CatalogItemVersion> getCatalogItems() {
         ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(
                 new ScanRequest("CatalogItemVersions"));
 

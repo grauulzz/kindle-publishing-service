@@ -22,8 +22,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class Controller {
     private static final ApplicationComponent component = App.component;
 
+    @GetMapping("/")
+    public String index() {
+        // curl -X GET http://localhost:8080/
+        return "test spring";
+    }
+
     @GetMapping(value = "/books/{id}", produces = {"application/json"})
     public ResponseEntity<?> getBook(@PathVariable String id) {
+        // curl -X GET http://localhost:8080/books/book.b3750190-2a30-4ca8-ae1b-73d0d202dc41
         GetBookActivity bookActivity = component.provideGetBookActivity();
         GetBookRequest getBookRequest = GetBookRequest.builder().withBookId(id).build();
         return new ResponseEntity<>(bookActivity.execute(getBookRequest), HttpStatus.OK);
