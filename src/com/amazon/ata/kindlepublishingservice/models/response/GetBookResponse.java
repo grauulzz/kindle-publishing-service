@@ -4,6 +4,7 @@ import com.amazon.ata.kindlepublishingservice.models.Book;
 import com.amazon.ata.kindlepublishingservice.models.BookRecommendation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,11 +26,11 @@ public class GetBookResponse {
     }
 
     public List<BookRecommendation> getRecommendations() {
-        return recommendations;
+        return Collections.unmodifiableList(recommendations);
     }
 
     public void setRecommendations(List<BookRecommendation> recommendations) {
-        this.recommendations = recommendations;
+        this.recommendations = new ArrayList<>(recommendations);
     }
 
     @Override

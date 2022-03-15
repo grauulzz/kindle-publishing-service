@@ -13,6 +13,7 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusIt
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.services.lambda.runtime.Context;
@@ -55,15 +56,21 @@ public class SubmitBookForPublishingActivity {
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
         BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
 
-        if (StringUtils.isNotBlank(request.getBookId())) {
-            getCatalogItems().stream().filter(item -> item.getBookId().equals(request.getBookId()))
-                    .findFirst().orElseThrow(() -> new BookNotFoundException(request.getBookId()));
+        if (StringUtils.isNotBlank(bookPublishRequest.getBookId())) {
+            this.getCatalogItems().stream()
+                    .filter(item -> item.getBookId().equals(bookPublishRequest.getBookId()))
+                    .findFirst().orElseThrow(() ->
+                                                     new BookNotFoundException(bookPublishRequest.getBookId()));
         }
 
-        PublishingStatusItem item =  publishingStatusDao.setPublishingStatus(
+        PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
                 bookPublishRequest.getPublishingRecordId(),
                 PublishingRecordStatus.QUEUED,
                 bookPublishRequest.getBookId());
+
+        App.component.provideDynamoDBMapper().save(item);
+
+
 
         return SubmitBookForPublishingResponse.builder()
                 .withPublishingRecordId(item.getPublishingRecordId())
@@ -71,12 +78,11 @@ public class SubmitBookForPublishingActivity {
     }
 
     private List<CatalogItemVersion> getCatalogItems() {
-        ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(
-                new ScanRequest("CatalogItemVersions"));
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("CatalogItemVersions"));
 
-        return result.getItems().stream()
-                .map(item -> App.component.provideDynamoDBMapper().marshallIntoObject(CatalogItemVersion.class,
-                        item))
+        return result.getItems().stream().map(item -> App.component.provideDynamoDBMapper()
+                        .marshallIntoObject(CatalogItemVersion.class, item))
                 .collect(Collectors.toList());
     }
 }

@@ -8,6 +8,7 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.gson.GsonBuilder;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class RemoveBookFromCatalogResponse {
 
@@ -83,6 +84,38 @@ public class RemoveBookFromCatalogResponse {
         }
     }
 
+    private ScanRequest getScanRequest() {
+        return scanRequest;
+    }
+
+    private ScanResult getScanResult() {
+        return scanResult;
+    }
+
+
+    @Override
+    public String toString() {
+        return "RemoveBookFromCatalogResponse{" +
+                       "item=" + item +
+                       ", scanRequest=" + scanRequest +
+                       ", scanResult=" + scanResult +
+                       '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RemoveBookFromCatalogResponse response = (RemoveBookFromCatalogResponse) o;
+        return Objects.equals(getItem(), response.getItem()) &&
+                       Objects.equals(getScanRequest(), response.getScanRequest()) &&
+                       Objects.equals(getScanResult(), response.getScanResult());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getItem(), getScanRequest(), getScanResult());
+    }
 }
 
 //    public static RemoveBookFromCatalogResponse.Builder builder() {return new RemoveBookFromCatalogResponse.Builder();}

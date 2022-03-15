@@ -4,8 +4,6 @@ import com.amazon.ata.kindlepublishingservice.dagger.ATAKindlePublishingServiceM
 import com.amazon.ata.kindlepublishingservice.dagger.ApplicationComponent;
 import com.amazon.ata.kindlepublishingservice.dagger.DaggerApplicationComponent;
 import com.amazon.ata.kindlepublishingservice.models.response.FormatResponse;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import java.util.Arrays;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -29,10 +27,10 @@ public class App {
         }
     }
 
-    @Bean
-    public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-        return args -> {
-            System.out.println(FormatResponse.toJson(ctx.getBeanDefinitionNames()));
-        };
-    }
+//    @Bean
+//    public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
+//        return args -> {
+//            System.out.println(FormatResponse.toJson(ctx.getBeanDefinitionNames()));
+//        };
+//    }
 }

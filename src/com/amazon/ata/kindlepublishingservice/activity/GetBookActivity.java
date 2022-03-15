@@ -23,8 +23,8 @@ import javax.inject.Inject;
  */
 
 public class GetBookActivity {
-    private RecommendationsServiceClient recommendationServiceClient;
-    private CatalogDao catalogDao;
+    private final RecommendationsServiceClient recommendationServiceClient;
+    private final CatalogDao catalogDao;
 
     /**
      * Instantiates a new GetBookActivity object.
