@@ -14,7 +14,7 @@ public class GetBookResponse {
 
     public GetBookResponse(Book book, List<BookRecommendation> recommendations) {
         this.book = book;
-        this.recommendations = new ArrayList<>(recommendations);
+        this.recommendations = recommendations;
     }
 
     public Book getBook() {
@@ -26,11 +26,11 @@ public class GetBookResponse {
     }
 
     public List<BookRecommendation> getRecommendations() {
-        return Collections.unmodifiableList(recommendations);
+        return recommendations;
     }
 
     public void setRecommendations(List<BookRecommendation> recommendations) {
-        this.recommendations = new ArrayList<>(recommendations);
+        this.recommendations = recommendations;
     }
 
     @Override
@@ -68,7 +68,7 @@ public class GetBookResponse {
         }
 
         public Builder withRecommendations(List<BookRecommendation> recommendations) {
-            this.recommendations = new ArrayList<>(recommendations);
+            this.recommendations = recommendations;
             return this;
         }
 
