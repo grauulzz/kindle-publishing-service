@@ -18,10 +18,13 @@ public class RemoveBookFromCatalogActivity {
     }
 
     public RemoveBookFromCatalogResponse execute(RemoveBookFromCatalogRequest request) {
-        CatalogItemVersion item = catalogDao.getBookFromCatalog(request.getBookId());
-        // CatalogItemVersion item = catalogDao.getLatestVersionOfBook(request.getBookId());
+        CatalogItemVersion item = catalogDao.getLatestVersionOfBook(request.getBookId());
 
+        int version = item.getVersion();
         item.setInactive(true);
+        catalogDao.saveItem(item);
+        item.setVersion(version + 1);
+        item.setInactive(false);
         catalogDao.saveItem(item);
         return new RemoveBookFromCatalogResponse(item);
     }

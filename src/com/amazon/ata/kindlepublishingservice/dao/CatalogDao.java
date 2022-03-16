@@ -1,13 +1,17 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
+import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;import java.util.HashMap;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.model.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 public class CatalogDao {
@@ -66,6 +70,30 @@ public class CatalogDao {
 
     public void saveItem(CatalogItemVersion version) {
         dynamoDbMapper.save(version);
+    }
+
+    public ScanResult scanCatalogItems(CatalogItemVersion item, String attributeName) {
+        ScanRequest scanRequest = new ScanRequest("CatalogItemVersions");
+
+        String bookId = item.getBookId();
+        String version = Integer.toString(item.getVersion());
+
+        switch (attributeName) {
+            case "bookId" :
+                scanRequest.addScanFilterEntry("bookId", new Condition()
+                        .withComparisonOperator(ComparisonOperator.EQ)
+                        .withAttributeValueList(new AttributeValue().withS(bookId)));
+                break;
+            case "version" :
+                scanRequest.addScanFilterEntry("version", new Condition()
+                        .withComparisonOperator(ComparisonOperator.EQ)
+                        .withAttributeValueList(new AttributeValue().withN(version)));
+                break;
+            default:
+                break;
+        }
+
+        return DynamoDbClientProvider.getDynamoDBClient().scan(scanRequest);
     }
 
 }

@@ -1,11 +1,15 @@
-package com.amazon.ata.kindlepublishingservice;
+package com.amazon.ata.kindlepublishingservice.tests;
 
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
 import com.amazon.ata.kindlepublishingservice.converters.CatalogItemConverter;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
+import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.Book;
+import com.amazon.ata.kindlepublishingservice.models.response.FormatResponse;
+import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -20,10 +24,13 @@ import javax.swing.table.TableModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.mockito.MockitoAnnotations.initMocks;
+
 class DbTest {
     private final DynamoDBMapper mapper = new DynamoDBMapper(DynamoDbClientProvider.getDynamoDBClient());
     private CatalogItemVersion catalogItemVersion;
     private final String exsitingId = "book.ac510a76-008c-4478-b9f3-c277d74fa305";
+    private Map<String, AttributeValue> itemAttrMap = new HashMap<>();
 
 
     @BeforeEach
@@ -36,6 +43,14 @@ class DbTest {
         catalogItemVersion.setGenre(BookGenre.AUTOBIOGRAPHY);
         catalogItemVersion.setVersion(1);
         catalogItemVersion.setInactive(false);
+
+        itemAttrMap.put("bookId", new AttributeValue().withS("book.ac510a76-008c-4478-b9f3-c277d74fa305"));
+        itemAttrMap.put("version", new AttributeValue().withN("1"));
+        itemAttrMap.put("inactive", new AttributeValue().withBOOL(false));
+        itemAttrMap.put("title", new AttributeValue().withS("title"));
+        itemAttrMap.put("author", new AttributeValue().withS("author"));
+        itemAttrMap.put("text", new AttributeValue().withS(  "cool-book-text"));
+        itemAttrMap.put("genre", new AttributeValue().withS(String.valueOf(BookGenre.HORROR)));
     }
 
     private static void print(String input) {
@@ -44,10 +59,136 @@ class DbTest {
         System.out.printf("%s%s%s\n", teal, input, reset);
     }
 
-    @Test
-    void daoTest() {
 
+    @Test
+    void catalogItem_marshallIntoObject_thenGet() {
+        CatalogItemVersion item = mapper.marshallIntoObject(CatalogItemVersion.class, itemAttrMap);
+        print(item.toString());
     }
+
+    @Test
+    void catalogItem_marshallIntoObject_thenAddItem() {
+        CatalogItemVersion item = mapper.marshallIntoObject(CatalogItemVersion.class, itemAttrMap);
+        mapper.save(item);
+        print(item.toString());
+    }
+
+    @Test
+    void catalogItem_marshallIntoObject_thenUpdate() {
+        CatalogItemVersion item = mapper.marshallIntoObject(CatalogItemVersion.class, itemAttrMap);
+        int version = item.getVersion();
+        item.setInactive(true);
+        item.setGenre(BookGenre.AUTOBIOGRAPHY);
+        item.setVersion(version + 1);
+        mapper.save(item);
+        print(item.toString());
+    }
+
+    @Test
+    void catalogItem_marshallIntoObject_thenDelete() {
+        CatalogItemVersion item = mapper.marshallIntoObject(CatalogItemVersion.class, itemAttrMap);
+        mapper.delete(item);
+    }
+
+
+    private List<PublishingStatusItem> statusItemsTable() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("PublishingStatus"));
+
+        return result.getItems().stream().filter(item -> item.get("status") != null).map(item ->
+            this.mapper.marshallIntoObject(PublishingStatusItem.class, item))
+                .collect(Collectors.toList());
+    }
+
+    @Test
+    void getPublishingStatusItemList(){
+        List<PublishingStatusItem> setStatusList = statusItems(PublishingRecordStatus.QUEUED);
+        System.out.println(FormatResponse.toJson(setStatusList));
+
+        // set status to failed and update db
+        List<PublishingStatusItem> result = setStatusList.stream()
+                .peek(item -> item.setStatus(PublishingRecordStatus.FAILED))
+                .collect(Collectors.toList());
+
+        result.forEach(mapper::save);
+
+        System.out.println(FormatResponse.toJson(result));
+    }
+
+    private List<PublishingStatusItem> statusItems(PublishingRecordStatus status) {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("PublishingStatus"));
+
+        return result.getItems().stream().map(item ->
+            this.mapper.marshallIntoObject(PublishingStatusItem.class, item))
+                .collect(Collectors.toList())
+                .stream().filter(item -> item.getStatus()
+                        .equals(status))
+                .collect(Collectors.toList());
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Test
     void tableInfo() {
@@ -184,6 +325,7 @@ class DbTest {
         print(catalogItemMarshall.toString());
 
     }
+
 
 
 

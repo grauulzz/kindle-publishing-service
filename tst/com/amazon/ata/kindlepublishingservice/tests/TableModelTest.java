@@ -1,3 +1,5 @@
+package com.amazon.ata.kindlepublishingservice.tests;
+
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.recommendationsservice.types.BookGenre;

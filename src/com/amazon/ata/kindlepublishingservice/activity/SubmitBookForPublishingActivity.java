@@ -7,13 +7,11 @@ import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
-import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.services.lambda.runtime.Context;
@@ -71,7 +69,6 @@ public class SubmitBookForPublishingActivity {
         App.component.provideDynamoDBMapper().save(item);
 
 
-
         return SubmitBookForPublishingResponse.builder()
                 .withPublishingRecordId(item.getPublishingRecordId())
                 .build();
@@ -85,4 +82,16 @@ public class SubmitBookForPublishingActivity {
                         .marshallIntoObject(CatalogItemVersion.class, item))
                 .collect(Collectors.toList());
     }
+
+    public static class Handler implements RequestHandler<SubmitBookForPublishingRequest, SubmitBookForPublishingResponse> {
+
+        private final SubmitBookForPublishingActivity submitBookForPublishingActivity = App.component.provideSubmitBookForPublishingActivity();
+
+        @Override
+        public SubmitBookForPublishingResponse handleRequest(SubmitBookForPublishingRequest request, Context context) {
+            return submitBookForPublishingActivity.execute(request);
+        }
+    }
 }
+
+

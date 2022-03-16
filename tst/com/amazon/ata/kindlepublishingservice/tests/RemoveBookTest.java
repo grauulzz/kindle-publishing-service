@@ -1,3 +1,4 @@
+package com.amazon.ata.kindlepublishingservice.tests;
 
 import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.activity.RemoveBookFromCatalogActivity;
