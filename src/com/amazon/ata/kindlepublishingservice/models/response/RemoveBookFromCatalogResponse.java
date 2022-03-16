@@ -17,27 +17,9 @@ public class RemoveBookFromCatalogResponse {
     public RemoveBookFromCatalogResponse(CatalogItemVersion item) {
         this.item = item;
         this.scanRequest = new ScanRequest("CatalogItemVersions");
-        this.processScanRequest();
     }
 
-    private void processScanRequest() {
-        this.scanRequest.addScanFilterEntry("bookId", new Condition()
-                .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(this.item.getBookId())));
 
-        this.scanResult = DynamoDbClientProvider.getDynamoDBClient().scan(this.scanRequest);
-    }
-
-    private static RemoveBookFromCatalogResponse fromDynamoDb(String id) {
-        try {
-            CatalogItemVersion item = App.component.provideDynamoDBMapper()
-                    .load(CatalogItemVersion.class, id);
-            return new RemoveBookFromCatalogResponse(item);
-        } catch (AmazonDynamoDBException e) {
-            App.logger.info("Error while removing book from catalog", e);
-            throw e;
-        }
-    }
 
     private ScanRequest getScanRequest() {
         return scanRequest;

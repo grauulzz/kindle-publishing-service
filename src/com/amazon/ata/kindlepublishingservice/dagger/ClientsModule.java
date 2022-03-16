@@ -7,6 +7,7 @@ import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.recommendationsservice.RecommendationsService;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import dagger.Module;
 import dagger.Provides;
 
@@ -24,8 +25,14 @@ public class ClientsModule {
 
     @Singleton
     @Provides
-    public CatalogDao provideCatalogDao() {
-        return new CatalogDao(DaggerApplicationComponent.create().provideDynamoDBMapper());
+    public CatalogDao provideCatalogDao(DynamoDBMapper dynamoDBMapper) {
+        return new CatalogDao(dynamoDBMapper);
+    }
+
+    @Singleton
+    @Provides
+    public PublishingStatusDao providePublishingStatusDao(DynamoDBMapper dynamoDBMapper) {
+        return new PublishingStatusDao(dynamoDBMapper);
     }
 
 }

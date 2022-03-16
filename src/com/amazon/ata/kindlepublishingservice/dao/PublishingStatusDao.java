@@ -1,12 +1,15 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
+import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
-import com.amazon.ata.kindlepublishingservice.exceptions.PublishingStatusNotFoundException;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -77,5 +80,27 @@ public class PublishingStatusDao {
         item.setBookId(bookId);
         dynamoDbMapper.save(item);
         return item;
+    }
+
+    public void save(PublishingStatusItem item) {
+        dynamoDbMapper.save(item);
+    }
+
+    public List<PublishingStatusItem> getPublishingStatusList() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("PublishingStatus"));
+
+        return result.getItems().stream().map(item -> this.dynamoDbMapper
+                        .marshallIntoObject(PublishingStatusItem.class, item))
+                .collect(Collectors.toList());
+    }
+
+    public List<CatalogItemVersion> getCatalogItemsList() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("CatalogItemVersions"));
+
+        return result.getItems().stream().map(item -> this.dynamoDbMapper
+                        .marshallIntoObject(CatalogItemVersion.class, item))
+                .collect(Collectors.toList());
     }
 }

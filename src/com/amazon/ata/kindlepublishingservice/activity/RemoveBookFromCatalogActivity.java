@@ -1,6 +1,5 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
-import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
@@ -15,8 +14,8 @@ public class RemoveBookFromCatalogActivity {
     private final CatalogDao catalogDao;
 
     @Inject
-    public RemoveBookFromCatalogActivity() {
-        this.catalogDao = App.component.provideCatalogDao();
+    public RemoveBookFromCatalogActivity(CatalogDao catalogDao) {
+        this.catalogDao = catalogDao;
     }
 
     public RemoveBookFromCatalogResponse execute(RemoveBookFromCatalogRequest request) {

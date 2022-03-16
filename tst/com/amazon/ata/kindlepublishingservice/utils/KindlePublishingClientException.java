@@ -1,4 +1,4 @@
-package com.amazon.ata.kindlepublishingservice.tests;
+package com.amazon.ata.kindlepublishingservice.utils;
 
 public class KindlePublishingClientException extends Exception {
     String message;
