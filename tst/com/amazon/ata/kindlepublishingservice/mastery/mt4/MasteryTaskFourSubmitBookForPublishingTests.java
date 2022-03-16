@@ -116,7 +116,8 @@ public class MasteryTaskFourSubmitBookForPublishingTests extends IntegrationTest
         super.getTestDao().save(existingBook);
 
         // WHEN
-        SubmitBookForPublishingResponse response = COMPONENT.provideSubmitBookForPublishingActivity().execute(request);
+        SubmitBookForPublishingResponse response = COMPONENT.provideSubmitBookForPublishingActivity()
+                .execute(request);
 
         // THEN
         // wait for queued status

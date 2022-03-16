@@ -1,5 +1,7 @@
 .DS_Store
-build
+/build/*
+/!build/generated
+/!build/distributions
 .idea
 *.iml
 .env
@@ -8,6 +10,7 @@ build
 annotation-generated-src
 annotation-generated-tst
 /configurations/stack-exec
+
 
 # Ignore Gradle project-specific cache directory
 .gradle

@@ -52,6 +52,15 @@ public class PublishingStatusRecord {
         return Objects.hash(status, statusMessage, bookId);
     }
 
+    @Override
+    public String toString() {
+        return "PublishingStatusRecord{" +
+                "status='" + status + '\'' +
+                ", statusMessage='" + statusMessage + '\'' +
+                ", bookId='" + bookId + '\'' +
+                '}';
+    }
+
     public static Builder builder() {return new Builder();}
 
     public PublishingStatusRecord(Builder builder) {

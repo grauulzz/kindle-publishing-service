@@ -4,6 +4,7 @@ import com.amazon.ata.kindlepublishingservice.models.Book;
 import com.amazon.ata.kindlepublishingservice.models.BookRecommendation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ public class GetBookResponse {
 
     public GetBookResponse(Book book, List<BookRecommendation> recommendations) {
         this.book = book;
-        this.recommendations = new ArrayList<>(recommendations);
+        this.recommendations = recommendations;
     }
 
     public Book getBook() {
@@ -67,7 +68,7 @@ public class GetBookResponse {
         }
 
         public Builder withRecommendations(List<BookRecommendation> recommendations) {
-            this.recommendations = new ArrayList<>(recommendations);
+            this.recommendations = recommendations;
             return this;
         }
 

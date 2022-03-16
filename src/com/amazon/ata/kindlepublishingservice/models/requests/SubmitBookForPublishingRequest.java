@@ -1,5 +1,6 @@
 package com.amazon.ata.kindlepublishingservice.models.requests;
 
+import com.amazon.ata.kindlepublishingservice.models.Book;
 import java.util.Objects;
 
 public class SubmitBookForPublishingRequest {
@@ -74,6 +75,17 @@ public class SubmitBookForPublishingRequest {
         return Objects.hash(bookId, title, author, text, genre);
     }
 
+    @Override
+    public String toString() {
+        return "SubmitBookForPublishingRequest{" +
+                       "bookId='" + bookId + '\'' +
+                       ", title='" + title + '\'' +
+                       ", author='" + author + '\'' +
+                       ", text='" + text + '\'' +
+                       ", genre='" + genre + '\'' +
+                       '}';
+    }
+
     public SubmitBookForPublishingRequest(Builder builder) {
         this.bookId = builder.bookId;
         this.title = builder.title;
@@ -122,5 +134,14 @@ public class SubmitBookForPublishingRequest {
         }
 
         public SubmitBookForPublishingRequest build() { return new SubmitBookForPublishingRequest(this); }
+
+        public Builder withBook(Book book) {
+            this.bookId = book.getBookId();
+            this.title = book.getTitle();
+            this.author = book.getAuthor();
+            this.text = book.getText();
+            this.genre = book.getGenre();
+            return this;
+        }
     }
 }

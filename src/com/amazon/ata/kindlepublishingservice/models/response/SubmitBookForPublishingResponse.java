@@ -30,6 +30,13 @@ public class SubmitBookForPublishingResponse {
         return Objects.hash(publishingRecordId);
     }
 
+    @Override
+    public String toString() {
+        return "SubmitBookForPublishingResponse{" +
+                "publishingRecordId='" + publishingRecordId + '\'' +
+                '}';
+    }
+
     public static Builder builder() {return new Builder();}
 
     public SubmitBookForPublishingResponse(Builder builder) {

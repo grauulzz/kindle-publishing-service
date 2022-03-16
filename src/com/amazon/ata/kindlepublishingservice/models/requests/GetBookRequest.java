@@ -32,6 +32,13 @@ public class GetBookRequest {
         return Objects.hash(bookId);
     }
 
+    @Override
+    public String toString() {
+        return "GetBookRequest{" +
+            "bookId='" + bookId + '\'' +
+            '}';
+    }
+
     public static Builder builder() {return new Builder();}
 
     public static final class Builder {
