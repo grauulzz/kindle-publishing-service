@@ -23,8 +23,26 @@ public class GetPublishingStatusActivity {
 
     public GetPublishingStatusResponse execute(GetPublishingStatusRequest publishingStatusRequest) {
 
+        String id = publishingStatusRequest.getPublishingRecordId();
+
+        List<PublishingStatusItem> items = publishingStatusDao.getPublishingStatusList()
+                .stream().filter(item -> item.getPublishingRecordId().equals(id))
+                .collect(Collectors.toList());
+
+        List<PublishingStatusRecord> publishingStatusList = items.stream()
+                .map(item -> new PublishingStatusRecord(item.getStatus().name(),
+                        item.getStatusMessage(), item.getBookId()))
+                .collect(Collectors.toList());
+
+
+
+        if (publishingStatusList.isEmpty()) {
+            throw new PublishingStatusNotFoundException(String.format("No Publishing history available for [%s]", id));
+        }
+
         return GetPublishingStatusResponse.builder()
-                .withPublishingStatusHistory(new ArrayList<>()).build();
+                .withPublishingStatusHistory(publishingStatusList).build();
+
     }
 }
 

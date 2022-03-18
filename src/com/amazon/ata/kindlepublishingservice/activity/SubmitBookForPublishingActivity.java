@@ -46,14 +46,14 @@ public class SubmitBookForPublishingActivity {
      * to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
-        if (StringUtils.isNotBlank(request.getBookId())) {
+        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+        if (StringUtils.isNotBlank(bookPublishRequest.getBookId())) {
             this.publishingStatusDao.getCatalogItemsList().stream()
                     .filter(item -> item.getBookId().equals(request.getBookId()))
                     .findFirst().orElseThrow(() ->
                                                      new BookNotFoundException(request.getBookId()));
         }
 
-        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
 
         PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
                 bookPublishRequest.getPublishingRecordId(),
