@@ -1,6 +1,7 @@
 package com.amazon.ata.kindlepublishingservice.dagger;
 
 
+import com.amazon.ata.kindlepublishingservice.activity.SubmitBookForPublishingActivity;
 import com.amazon.ata.kindlepublishingservice.clients.RecommendationsServiceClient;
 //import com.amazon.ata.kindlepublishingservice.metrics.MetricsPublisher;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
@@ -35,4 +36,17 @@ public class ClientsModule {
         return new PublishingStatusDao(dynamoDBMapper);
     }
 
+    @Singleton
+    @Provides
+    public SubmitBookForPublishingActivity provideSubmitBookForPublishingActivity() {
+        return new SubmitBookForPublishingActivity();
+    }
+
+//    @Singleton
+//    @Provides
+//    public MetricsPublisher provideMetricsPublisher() {
+//        return new MetricsPublisher();
+//    }
 }
+
+

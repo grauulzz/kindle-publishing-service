@@ -86,11 +86,21 @@ public class CatalogDao {
                 .collect(Collectors.toList());
     }
 
+    // boolean bookExists = catalogDao.checkCatalogForItem(bookPublishRequestId);
     public boolean checkCatalogForItem(String bookId) {
-        Optional<CatalogItemVersion> item = Optional.ofNullable(this.dynamoDbMapper.load(
-                CatalogItemVersion.class, bookId));
-        return item.isPresent();
+        CatalogItemVersion item = this.dynamoDbMapper.load(CatalogItemVersion.class, bookId);
+        return item != null;
     }
+
+    public boolean isExsitingCatalogItem(String bookId) {
+        return getCatalogItemsList().stream().filter(item -> item
+                .getBookId().equals(bookId)).findFirst()
+                .orElseThrow(() -> new BookNotFoundException(
+                        String.format("No book found for id: %s", bookId)
+                )) == null;
+
+    }
+
 
 }
 

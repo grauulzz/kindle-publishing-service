@@ -2,6 +2,7 @@ package com.amazon.ata.kindlepublishingservice.activity;
 
 import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.exceptions.PublishingStatusNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
@@ -14,6 +15,7 @@ import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
 import com.google.gson.Gson;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import org.junit.platform.commons.util.StringUtils;
 
@@ -28,15 +30,10 @@ public class SubmitBookForPublishingActivity {
     private final PublishingStatusDao publishingStatusDao;
     private final CatalogDao catalogDao;
 
-    /**
-     * Instantiates a new SubmitBookForPublishingActivity object.
-     *
-     * @param publishingStatusDao PublishingStatusDao to access the publishing status table.
-     */
     @Inject
-    public SubmitBookForPublishingActivity(PublishingStatusDao publishingStatusDao, CatalogDao catalogDao) {
-        this.publishingStatusDao = publishingStatusDao;
-        this.catalogDao = catalogDao;
+    public SubmitBookForPublishingActivity() {
+        this.publishingStatusDao = App.component.providePublishingStatusDao();
+        this.catalogDao = App.component.provideCatalogDao();
     }
 
     /**
@@ -52,28 +49,28 @@ public class SubmitBookForPublishingActivity {
         String requestBookId = request.getBookId();
 
         if (StringUtils.isNotBlank(requestBookId)) {
+            try {
+                boolean bookExists = catalogDao.checkCatalogForItem(requestBookId);
+                if (bookExists) {
+                    // updates an existing book
+                    PublishingStatusItem matchingPublishingItem = publishingStatusDao.getPublishingStatusIdByBookId(requestBookId)
+                            .orElseThrow(() -> new PublishingStatusNotFoundException(
+                                    "Publishing status not found for book id: " + requestBookId)
+                            );
 
-            boolean bookExists = catalogDao.checkCatalogForItem(requestBookId);
+                    return SubmitBookForPublishingResponse.builder()
+                            .withPublishingRecordId(matchingPublishingItem.getPublishingRecordId())
+                            .build();
+                }
 
-            if (bookExists) {
-                // updates an existing book
-                PublishingStatusItem matchingPublishingItem = publishingStatusDao.getPublishingStatusIdByBookId(requestBookId)
-                        .orElseThrow(() -> new PublishingStatusNotFoundException(
-                                "Publishing status not found for book id: " + requestBookId)
-                        );
+            } catch (BookNotFoundException e) {
+                App.logger.error("Book not found for book id: " + requestBookId);
 
-                PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
-                        matchingPublishingItem.getPublishingRecordId(),
-                        PublishingRecordStatus.QUEUED,
-                        matchingPublishingItem.getBookId());
-
-                return SubmitBookForPublishingResponse.builder()
-                        .withPublishingRecordId(item.getPublishingRecordId())
-                        .build();
             }
         }
 
         BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+
         String bookIdFromRequest = bookPublishRequest.getBookId();
 
         PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
@@ -92,4 +89,46 @@ public class SubmitBookForPublishingActivity {
 
 }
 
+
+//    public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
+//        String requestBookId = request.getBookId();
+//
+//        if (StringUtils.isNotBlank(requestBookId)) {
+//            try {
+//
+//                boolean bookExists = catalogDao.isExsitingCatalogItem(requestBookId);
+//
+//                if (bookExists) {
+//
+//                    PublishingStatusItem matchingPublishingItem = publishingStatusDao.getPublishingStatusIdByBookId(requestBookId)
+//                            .orElseThrow(() -> new PublishingStatusNotFoundException(
+//                                    "Publishing status not found for book id: " + requestBookId)
+//                            );
+//                    return SubmitBookForPublishingResponse.builder()
+//                            .withPublishingRecordId(matchingPublishingItem.getPublishingRecordId())
+//                            .build();
+//                }
+//
+//            } catch (BookNotFoundException e) {
+//                App.logger.error("Book not found for book id: " + requestBookId, e);
+//                throw e;
+//
+//            }
+//        }
+//
+//        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+//        String bookIdFromRequest = bookPublishRequest.getBookId();
+//
+//        PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
+//                bookPublishRequest.getPublishingRecordId(),
+//                PublishingRecordStatus.QUEUED,
+//                bookIdFromRequest);
+//
+//        publishingStatusDao.save(item);
+//
+//        return SubmitBookForPublishingResponse.builder()
+//                .withPublishingRecordId(item.getPublishingRecordId())
+//                .build();
+//
+//    }
 
