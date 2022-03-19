@@ -1,7 +1,9 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
 import com.amazon.ata.kindlepublishingservice.App;
+import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
+import com.amazon.ata.kindlepublishingservice.exceptions.PublishingStatusNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
@@ -10,11 +12,10 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusIt
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
-import org.apache.commons.lang3.StringUtils;
+import com.google.gson.Gson;
 
 import javax.inject.Inject;
+import org.junit.platform.commons.util.StringUtils;
 
 /**
  * Implementation of the SubmitBookForPublishingActivity for ATACurriculumKindlePublishingService's
@@ -25,6 +26,7 @@ import javax.inject.Inject;
 public class SubmitBookForPublishingActivity {
 
     private final PublishingStatusDao publishingStatusDao;
+    private final CatalogDao catalogDao;
 
     /**
      * Instantiates a new SubmitBookForPublishingActivity object.
@@ -32,8 +34,9 @@ public class SubmitBookForPublishingActivity {
      * @param publishingStatusDao PublishingStatusDao to access the publishing status table.
      */
     @Inject
-    public SubmitBookForPublishingActivity(PublishingStatusDao publishingStatusDao) {
+    public SubmitBookForPublishingActivity(PublishingStatusDao publishingStatusDao, CatalogDao catalogDao) {
         this.publishingStatusDao = publishingStatusDao;
+        this.catalogDao = catalogDao;
     }
 
     /**
@@ -46,40 +49,47 @@ public class SubmitBookForPublishingActivity {
      * to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
-        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
-        if (StringUtils.isNotBlank(bookPublishRequest.getBookId())) {
-            this.publishingStatusDao.getCatalogItemsList().stream()
-                    .filter(item -> item.getBookId().equals(request.getBookId()))
-                    .findFirst().orElseThrow(() ->
-                                                     new BookNotFoundException(request.getBookId()));
+        String requestBookId = request.getBookId();
+
+        if (StringUtils.isNotBlank(requestBookId)) {
+
+            boolean bookExists = catalogDao.checkCatalogForItem(requestBookId);
+
+            if (bookExists) {
+                // updates an existing book
+                PublishingStatusItem matchingPublishingItem = publishingStatusDao.getPublishingStatusIdByBookId(requestBookId)
+                        .orElseThrow(() -> new PublishingStatusNotFoundException(
+                                "Publishing status not found for book id: " + requestBookId)
+                        );
+
+                PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
+                        matchingPublishingItem.getPublishingRecordId(),
+                        PublishingRecordStatus.QUEUED,
+                        matchingPublishingItem.getBookId());
+
+                return SubmitBookForPublishingResponse.builder()
+                        .withPublishingRecordId(item.getPublishingRecordId())
+                        .build();
+            }
         }
 
+        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+        String bookIdFromRequest = bookPublishRequest.getBookId();
 
         PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
                 bookPublishRequest.getPublishingRecordId(),
                 PublishingRecordStatus.QUEUED,
-                bookPublishRequest.getBookId());
+                bookIdFromRequest);
 
         publishingStatusDao.save(item);
 
         return SubmitBookForPublishingResponse.builder()
                 .withPublishingRecordId(item.getPublishingRecordId())
                 .build();
+
     }
 
 
-
-    public static class Handler implements RequestHandler<SubmitBookForPublishingRequest,
-                                                                 SubmitBookForPublishingResponse> {
-
-        private final SubmitBookForPublishingActivity submitBookForPublishingActivity =
-                App.component.provideSubmitBookForPublishingActivity();
-
-        @Override
-        public SubmitBookForPublishingResponse handleRequest(SubmitBookForPublishingRequest request, Context context) {
-            return submitBookForPublishingActivity.execute(request);
-        }
-    }
 }
 
 

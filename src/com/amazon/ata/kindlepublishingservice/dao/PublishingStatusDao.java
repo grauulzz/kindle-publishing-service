@@ -7,8 +7,12 @@ import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
+import com.amazonaws.services.dynamodbv2.model.*;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
@@ -95,12 +99,28 @@ public class PublishingStatusDao {
                 .collect(Collectors.toList());
     }
 
-    public List<CatalogItemVersion> getCatalogItemsList() {
-        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
-                .scan(new ScanRequest("CatalogItemVersions"));
 
-        return result.getItems().stream().map(item -> this.dynamoDbMapper
-                        .marshallIntoObject(CatalogItemVersion.class, item))
-                .collect(Collectors.toList());
+
+    public PublishingStatusItem getPublishingStatus(String publishingRecordId) {
+        return dynamoDbMapper.load(PublishingStatusItem.class, publishingRecordId);
+    }
+
+    public Optional<PublishingStatusItem> getPublishingStatusIdByBookId(String bookId) {
+
+        HashMap<String, Condition> scanFilter = new HashMap<>();
+        scanFilter.put("publishingRecordId", new Condition()
+                .withComparisonOperator(ComparisonOperator.EQ)
+                .withAttributeValueList(new AttributeValue().withS(bookId)));
+
+        DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
+                .withScanFilter(scanFilter);
+
+        PaginatedScanList<PublishingStatusItem> scanResult = dynamoDbMapper.scan(
+                PublishingStatusItem.class, scanExpression);
+
+        if (!scanResult.isEmpty()) {
+            return Optional.of(scanResult.get(0));
+        }
+        return Optional.empty();
     }
 }

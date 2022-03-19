@@ -33,7 +33,6 @@ public class Controller {
     }
 
     @DeleteMapping(value = "/books/{id}")
-    @ResponseBody
     public ResponseEntity<?> removeBook(@PathVariable String id) {
         RemoveBookFromCatalogActivity removeBookFromCatalogActivity = component.provideRemoveBookFromCatalogActivity();
         RemoveBookFromCatalogRequest removeBookFromCatalogRequest = RemoveBookFromCatalogRequest.builder()
@@ -44,7 +43,7 @@ public class Controller {
                 .execute(removeBookFromCatalogRequest), HttpStatus.OK);
     }
 
-    @PostMapping (value = "/books", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping (value = "/books", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<?> submitBookForPublishing(@Valid @RequestBody Book book) {
         SubmitBookForPublishingActivity activity = component.provideSubmitBookForPublishingActivity();
         SubmitBookForPublishingRequest req = SubmitBookForPublishingRequest.builder().withBook(book).build();

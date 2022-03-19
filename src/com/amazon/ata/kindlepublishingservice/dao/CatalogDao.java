@@ -15,6 +15,7 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -76,21 +77,19 @@ public class CatalogDao {
         dynamoDbMapper.save(version);
     }
 
-    public CatalogItemVersion filterBookIdWithAttribute(String bookId, String attr) {
-        ScanRequest scanRequest = new ScanRequest();
-        scanRequest.addScanFilterEntry("bookId", new Condition()
-                .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue(attr).withS(bookId)));
+    public List<CatalogItemVersion> getCatalogItemsList() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("CatalogItemVersions"));
 
-        ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(scanRequest);
+        return result.getItems().stream().map(item -> this.dynamoDbMapper
+                        .marshallIntoObject(CatalogItemVersion.class, item))
+                .collect(Collectors.toList());
+    }
 
-        return result.getItems()
-                .stream()
-                .map(i -> this.dynamoDbMapper
-                        .marshallIntoObject(CatalogItemVersion.class, i))
-                .findFirst()
-                .orElseThrow(() -> new BookNotFoundException(String
-                        .format("No book found for id: [%s]", bookId)));
+    public boolean checkCatalogForItem(String bookId) {
+        Optional<CatalogItemVersion> item = Optional.ofNullable(this.dynamoDbMapper.load(
+                CatalogItemVersion.class, bookId));
+        return item.isPresent();
     }
 
 }
