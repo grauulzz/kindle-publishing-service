@@ -13,9 +13,6 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusIt
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
-import com.google.gson.Gson;
-
-import java.util.Optional;
 import javax.inject.Inject;
 import org.junit.platform.commons.util.StringUtils;
 

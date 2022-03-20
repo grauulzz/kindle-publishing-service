@@ -32,7 +32,7 @@ public class Controller {
         return new ResponseEntity<>(bookActivity.execute(getBookRequest), HttpStatus.OK);
     }
 
-    @DeleteMapping(value = "/books/{id}")
+    @DeleteMapping( value = "/books/{id}", produces = {"application/json"})
     public ResponseEntity<?> removeBook(@PathVariable String id) {
         RemoveBookFromCatalogActivity removeBookFromCatalogActivity = component.provideRemoveBookFromCatalogActivity();
         RemoveBookFromCatalogRequest removeBookFromCatalogRequest = RemoveBookFromCatalogRequest.builder()
@@ -47,14 +47,6 @@ public class Controller {
     public ResponseEntity<?> submitBookForPublishing(@Valid @RequestBody Book book) {
         SubmitBookForPublishingActivity activity = component.provideSubmitBookForPublishingActivity();
         SubmitBookForPublishingRequest req = SubmitBookForPublishingRequest.builder().withBook(book).build();
-        return new ResponseEntity<>(activity.execute(req), HttpStatus.OK);
-    }
-
-    @GetMapping(value = "/publishingstatus/{id}", produces = {"application/json"})
-    public ResponseEntity<?> getResponse(@PathVariable String id) {
-        GetPublishingStatusActivity activity = component.provideGetPublishingStatusActivity();
-        GetPublishingStatusRequest req = GetPublishingStatusRequest.builder()
-                .withPublishingRecordId(id).build();
         return new ResponseEntity<>(activity.execute(req), HttpStatus.OK);
     }
 }
