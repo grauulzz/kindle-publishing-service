@@ -1,18 +1,16 @@
-aws cloudformation create-stack --region us-west-2 --stack-name kindlepublishingservice-createtables --template-body file://configurations/tables.template.yml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --region us-east-1 --stack-name kindlepublishingservice-createtables --template-body file://configurations/tables.template.yml --capabilities CAPABILITY_IAM
 aws dynamodb batch-write-item --request-items file://configurations/PublishingStatusData.json
 aws dynamodb batch-write-item --request-items file://configurations/CatalogItemVersionsData.json
 
 
-//docker
+The purpose
+of this ALB (Application Load Balancer) will be to provide a publicly accessible URL which
+we can send HTTP requests to, and to distribute network traffic across the two duplicate
+Task instances we are going to set up for our project.
 
-//Retrieve an authentication token and authenticate your Docker client to your registry.
-aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/a3m1q8y0
+While one Task is busy, the ALB will
+automatically direct incoming traffic to the second Task
 
-//Build Docker image
-docker build -t kindle-publishing-repository .
+[docker image url]
+public.ecr.aws/a3m1q8y0/kindle-repository:latest
 
-//tag image (so you can push the image to this repository):
-docker tag kindle-publishing-repository:latest public.ecr.aws/a3m1q8y0/kindle-publishing-repository:latest
-
-//push image to AWS repository:
-docker push public.ecr.aws/a3m1q8y0/kindle-publishing-repository:latest

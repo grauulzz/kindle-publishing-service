@@ -2,7 +2,6 @@ package com.amazon.ata.kindlepublishingservice.activity;
 
 import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.exceptions.PublishingStatusNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
@@ -13,6 +12,9 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusIt
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
+import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.google.gson.Gson;
+import java.util.Optional;
 import javax.inject.Inject;
 import org.junit.platform.commons.util.StringUtils;
 
@@ -43,33 +45,45 @@ public class SubmitBookForPublishingActivity {
      * to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
+        App.logger.info("Processing Publishing Submit Book Request: " + new Gson().toJson(request));
         String requestBookId = request.getBookId();
 
         if (StringUtils.isNotBlank(requestBookId)) {
-            try {
-                boolean bookExists = catalogDao.checkCatalogForItem(requestBookId);
-                if (bookExists) {
-                    // updates an existing book
-                    PublishingStatusItem matchingPublishingItem = publishingStatusDao.getPublishingStatusIdByBookId(requestBookId)
-                            .orElseThrow(() -> new PublishingStatusNotFoundException(
-                                    "Publishing status not found for book id: " + requestBookId)
-                            );
+            boolean bookExists = catalogDao.isExsitingCatalogItem(requestBookId);
+            if (bookExists) {
+                App.logger.info("updating submit request for exsiting catalog item : \n" + requestBookId);
+                Optional<PublishingStatusItem> optionalItem = publishingStatusDao
+                        .queryItemsByBookId(requestBookId);
+
+                if (optionalItem.isPresent()) {
+                    PublishingStatusItem item = optionalItem.get();
+
+                    if (item.getPublishingRecordId() != null) {
+                        // bookId and recordId exist, return the item with an updated status record "In progress"
+                        item.setStatus(PublishingRecordStatus.IN_PROGRESS);
+                        item.setStatusMessage(KindlePublishingUtils.generatePublishingStatusMessage(PublishingRecordStatus.IN_PROGRESS));
+                        publishingStatusDao.save(item);
+                        return SubmitBookForPublishingResponse.builder()
+                            .withPublishingRecordId(item.getPublishingRecordId())
+                            .build();
+                    }
+                    App.logger.info("bookId present in catalog item table, but has no corresponding status record");
+
+                    // bookId exists, but with no status recordId
+                    item.setBookId(KindlePublishingUtils.generateBookId());
+                    item.setPublishingRecordId(KindlePublishingUtils.generatePublishingRecordId());
+                    item.setStatusMessage(KindlePublishingUtils.generatePublishingStatusMessage(PublishingRecordStatus.QUEUED));
+                    publishingStatusDao.save(item);
 
                     return SubmitBookForPublishingResponse.builder()
-                            .withPublishingRecordId(matchingPublishingItem.getPublishingRecordId())
+                            .withPublishingRecordId(item.getPublishingRecordId())
                             .build();
+
                 }
-
-            } catch (BookNotFoundException e) {
-                App.logger.error("Book not found for book id: " + requestBookId);
-
             }
         }
-
         BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
-
         String bookIdFromRequest = bookPublishRequest.getBookId();
-
         PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
                 bookPublishRequest.getPublishingRecordId(),
                 PublishingRecordStatus.QUEUED,

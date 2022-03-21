@@ -1,13 +1,11 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -105,7 +103,7 @@ public class PublishingStatusDao {
         return dynamoDbMapper.load(PublishingStatusItem.class, publishingRecordId);
     }
 
-    public Optional<PublishingStatusItem> getPublishingStatusIdByBookId(String bookId) {
+    public Optional<PublishingStatusItem> queryItemsByBookId(String bookId) {
 
         HashMap<String, Condition> scanFilter = new HashMap<>();
         scanFilter.put("publishingRecordId", new Condition()

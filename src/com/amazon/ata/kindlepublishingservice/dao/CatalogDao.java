@@ -96,9 +96,7 @@ public class CatalogDao {
         return getCatalogItemsList().stream().filter(item -> item
                 .getBookId().equals(bookId)).findFirst()
                 .orElseThrow(() -> new BookNotFoundException(
-                        String.format("No book found for id: %s", bookId)
-                )) == null;
-
+                        String.format("could not find [%s] in CatalogItemsTable", bookId))) != null;
     }
 
 

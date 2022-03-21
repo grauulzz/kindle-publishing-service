@@ -34,8 +34,6 @@ public class GetPublishingStatusActivity {
                         item.getStatusMessage(), item.getBookId()))
                 .collect(Collectors.toList());
 
-
-
         if (publishingStatusList.isEmpty()) {
             throw new PublishingStatusNotFoundException(String.format("No Publishing history available for [%s]", id));
         }
