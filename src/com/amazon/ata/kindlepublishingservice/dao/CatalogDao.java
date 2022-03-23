@@ -1,20 +1,19 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
-import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 
-import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
+import com.amazon.ata.kindlepublishingservice.models.Book;
+import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
+import com.amazon.ata.kindlepublishingservice.publishing.KindleFormatConverter;
+import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.model.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -81,23 +80,25 @@ public class CatalogDao {
         ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
                 .scan(new ScanRequest("CatalogItemVersions"));
 
-        return result.getItems().stream().map(item -> this.dynamoDbMapper
+        return result.getItems().stream()
+                .map(item -> this.dynamoDbMapper
                         .marshallIntoObject(CatalogItemVersion.class, item))
                 .collect(Collectors.toList());
     }
 
-    // boolean bookExists = catalogDao.checkCatalogForItem(bookPublishRequestId);
-    public boolean checkCatalogForItem(String bookId) {
-        CatalogItemVersion item = this.dynamoDbMapper.load(CatalogItemVersion.class, bookId);
-        return item != null;
+    public Optional<CatalogItemVersion> isExsitingCatalogItem(String bookId) {
+        return getCatalogItemsList().stream().filter(item -> item
+                .getBookId().equals(bookId)).findFirst();
     }
 
-    public boolean isExsitingCatalogItem(String bookId) {
-        return getCatalogItemsList().stream().filter(item -> item
-                .getBookId().equals(bookId)).findFirst()
-                .orElseThrow(() -> new BookNotFoundException(
-                        String.format("could not find [%s] in CatalogItemsTable", bookId))) != null;
+    public Book convertBookPublishRequestToBook(BookPublishRequest bookPublishRequest) {
+        int version = getLatestVersionOfBook(bookPublishRequest.getBookId()).getVersion();
+        KindleFormattedBook k = KindleFormatConverter.format(bookPublishRequest);
+        return Book.builder().withBookId(k.getBookId()).withText(k.getText()).withTitle(k.getTitle()).withAuthor(k.getAuthor()).withGenre(k.getGenre().name()).withVersion(version).build();
     }
+
+
+//    KindleFormattedBook book = KindleFormattedBook.builder().withBookId(bookPublishRequest.getBookId()).withAuthor(bookPublishRequest.getAuthor()).withGenre(bookPublishRequest.getGenre()).withTitle(bookPublishRequest.getTitle()).withText(bookPublishRequest.getText()).build();
 
 
 }

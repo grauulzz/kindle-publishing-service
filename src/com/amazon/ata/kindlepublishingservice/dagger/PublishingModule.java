@@ -1,5 +1,6 @@
 package com.amazon.ata.kindlepublishingservice.dagger;
 
+import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublisher;
 
 import com.amazon.ata.kindlepublishingservice.publishing.NoOpTask;
@@ -16,7 +17,7 @@ public class PublishingModule {
     @Provides
     @Singleton
     public BookPublisher provideBookPublisher(ScheduledExecutorService scheduledExecutorService) {
-        return new BookPublisher(scheduledExecutorService, new NoOpTask());
+        return new BookPublisher(scheduledExecutorService, App.component.provideBookPublishTask());
     }
 
     @Provides

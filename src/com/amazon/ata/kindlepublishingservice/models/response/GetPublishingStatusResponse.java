@@ -3,10 +3,12 @@ package com.amazon.ata.kindlepublishingservice.models.response;
 import com.amazon.ata.kindlepublishingservice.models.PublishingStatusRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class GetPublishingStatusResponse {
     private List<PublishingStatusRecord> publishingStatusHistory;
+    Map<String, List<PublishingStatusRecord>> publishingRecords;
 
     public GetPublishingStatusResponse(List<PublishingStatusRecord> publishingStatusHistory) {
         this.publishingStatusHistory = publishingStatusHistory;
@@ -18,6 +20,10 @@ public class GetPublishingStatusResponse {
 
     public void setPublishingStatusHistory(List<PublishingStatusRecord> publishingStatusHistory) {
         this.publishingStatusHistory = publishingStatusHistory;
+    }
+
+    public Map<String, List<PublishingStatusRecord>> getPublishingRecords() {
+        return publishingRecords;
     }
 
     @Override
@@ -41,6 +47,7 @@ public class GetPublishingStatusResponse {
 
     public static final class Builder {
         private List<PublishingStatusRecord> publishingStatusHistory;
+        Map<String, List<PublishingStatusRecord>> publishingRecords;
 
         private Builder() {
 
@@ -48,6 +55,11 @@ public class GetPublishingStatusResponse {
 
         public Builder withPublishingStatusHistory(List<PublishingStatusRecord> publishingStatusHistoryToUse) {
             this.publishingStatusHistory = publishingStatusHistoryToUse;
+            return this;
+        }
+
+        public Builder withPublishingRecordsMap(Map<String, List<PublishingStatusRecord>> publishingRecords) {
+            this.publishingRecords = publishingRecords;
             return this;
         }
 

@@ -1,27 +1,32 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
+import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
+import com.amazon.ata.kindlepublishingservice.models.PublishingStatusRecord;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.model.*;
-import java.util.HashMap;
-import java.util.Optional;
+import com.google.gson.Gson;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Accesses the Publishing Status table.
  */
 public class PublishingStatusDao {
-
+    static AmazonDynamoDB client = DynamoDbClientProvider.getDynamoDBClient();
     private static final String ADDITIONAL_NOTES_PREFIX = " Additional Notes: ";
     private final DynamoDBMapper dynamoDbMapper;
 
@@ -92,15 +97,10 @@ public class PublishingStatusDao {
         ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
                 .scan(new ScanRequest("PublishingStatus"));
 
-        return result.getItems().stream().map(item -> this.dynamoDbMapper
+        return result.getItems().stream()
+                .map(item -> this.dynamoDbMapper
                         .marshallIntoObject(PublishingStatusItem.class, item))
                 .collect(Collectors.toList());
-    }
-
-
-
-    public PublishingStatusItem getPublishingStatus(String publishingRecordId) {
-        return dynamoDbMapper.load(PublishingStatusItem.class, publishingRecordId);
     }
 
     public Optional<PublishingStatusItem> queryItemsByBookId(String bookId) {
@@ -121,4 +121,52 @@ public class PublishingStatusDao {
         }
         return Optional.empty();
     }
+
+    public Optional<PublishingStatusItem> queryItemsByPublishingRecordId(String publishingRecordId) {
+
+        DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
+                .withScanFilter(new HashMap<>() {{
+                    put("publishingRecordId", new Condition()
+                            .withComparisonOperator(ComparisonOperator.EQ)
+                            .withAttributeValueList(new AttributeValue().withS(publishingRecordId)));
+                }});
+
+        PaginatedScanList<PublishingStatusItem> scanResult = dynamoDbMapper.scan(
+                PublishingStatusItem.class, scanExpression);
+
+        if (!scanResult.isEmpty()) {
+            return Optional.of(scanResult.get(0));
+        }
+        return Optional.empty();
+    }
+
+    public Map<String, List<PublishingStatusRecord>> getPublishingRecordHistory(String publishingRecordId) {
+        Optional<PublishingStatusItem> recordId = queryItemsByPublishingRecordId(publishingRecordId);
+        Map<String, List<PublishingStatusRecord>> publishingRecords = new HashMap<>();
+
+        if (recordId.isPresent()) {
+            Predicate<PublishingStatusItem> predicate = item -> item.getPublishingRecordId().equals(publishingRecordId);
+            List<PublishingStatusItem> items = getPublishingStatusList();
+            Stream<PublishingStatusItem> listToMap = items
+                    .parallelStream()
+                    .filter(predicate);
+
+            publishingRecords.put(publishingRecordId,
+                    listToMap.map(item -> PublishingStatusRecord.builder()
+                                    .withStatus(item.getStatus().name())
+                                    .withStatusMessage(item.getStatusMessage())
+                                    .withBookId(item.getBookId())
+                                    .build())
+                    .collect(Collectors.toList()));
+
+            return publishingRecords;
+        }
+
+        return publishingRecords;
+    }
+
+    public void saveByHashKey(String hashKey) {
+        this.queryItemsByPublishingRecordId(hashKey).ifPresent(this.dynamoDbMapper::save);
+    }
+
 }
