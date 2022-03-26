@@ -3,8 +3,8 @@ package com.amazon.ata.kindlepublishingservice;
 import com.amazon.ata.kindlepublishingservice.dagger.ATAKindlePublishingServiceManager;
 import com.amazon.ata.kindlepublishingservice.dagger.ApplicationComponent;
 import com.amazon.ata.kindlepublishingservice.dagger.DaggerApplicationComponent;
-import com.amazon.ata.kindlepublishingservice.models.response.FormatResponse;
-
+import com.amazon.ata.kindlepublishingservice.publishing.BookPublishTask;
+import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;

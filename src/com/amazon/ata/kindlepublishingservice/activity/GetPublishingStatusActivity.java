@@ -7,6 +7,7 @@ import com.amazon.ata.kindlepublishingservice.models.requests.GetPublishingStatu
 import com.amazon.ata.kindlepublishingservice.models.response.GetPublishingStatusResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 
 public class GetPublishingStatusActivity {
@@ -29,14 +30,14 @@ public class GetPublishingStatusActivity {
         if (records == null || records.isEmpty()) {
             throw new PublishingStatusNotFoundException(String.format("No Publishing history available for [%s]", id));
         }
+        Set<String> hashKeys = publishingRecords.keySet();
+        hashKeys.forEach(publishingStatusDao::saveByHashKey);
 
         return GetPublishingStatusResponse.builder()
-                       .withPublishingRecordsMap(publishingRecords)
-                .withPublishingStatusHistory(records).build();
+                .withPublishingStatusHistory(records)
+                .build();
 
     }
 }
 
-//    Set<String> hashKeys = publishingRecords.keySet();
-//        hashKeys.forEach(publishingStatusDao::saveByHashKey);
-//
+

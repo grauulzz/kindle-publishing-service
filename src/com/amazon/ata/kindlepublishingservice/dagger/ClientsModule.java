@@ -6,8 +6,6 @@ import com.amazon.ata.kindlepublishingservice.clients.RecommendationsServiceClie
 //import com.amazon.ata.kindlepublishingservice.metrics.MetricsPublisher;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
-import com.amazon.ata.kindlepublishingservice.publishing.BookPublishTask;
-import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingContext;
 import com.amazon.ata.recommendationsservice.RecommendationsService;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -19,11 +17,6 @@ import javax.inject.Singleton;
 @Module
 public class ClientsModule {
 
-    @Singleton
-    @Provides
-    public BookPublishTask provideBookPublishTask(BookPublishingContext bookPublishingContext) {
-        return new BookPublishTask(bookPublishingContext);
-    }
 
     @Singleton
     @Provides

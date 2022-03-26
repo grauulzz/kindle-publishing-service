@@ -91,16 +91,6 @@ public class CatalogDao {
                 .getBookId().equals(bookId)).findFirst();
     }
 
-    public Book convertBookPublishRequestToBook(BookPublishRequest bookPublishRequest) {
-        int version = getLatestVersionOfBook(bookPublishRequest.getBookId()).getVersion();
-        KindleFormattedBook k = KindleFormatConverter.format(bookPublishRequest);
-        return Book.builder().withBookId(k.getBookId()).withText(k.getText()).withTitle(k.getTitle()).withAuthor(k.getAuthor()).withGenre(k.getGenre().name()).withVersion(version).build();
-    }
-
-
-//    KindleFormattedBook book = KindleFormattedBook.builder().withBookId(bookPublishRequest.getBookId()).withAuthor(bookPublishRequest.getAuthor()).withGenre(bookPublishRequest.getGenre()).withTitle(bookPublishRequest.getTitle()).withText(bookPublishRequest.getText()).build();
-
-
 }
 
 
