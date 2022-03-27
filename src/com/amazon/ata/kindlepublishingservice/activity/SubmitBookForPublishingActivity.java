@@ -48,37 +48,18 @@ public class SubmitBookForPublishingActivity {
      * to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
-        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
-
-        if (request.getBookId() == null) {
-            String generatedBookId = KindlePublishingUtils.generateBookId();
-            BookPublishingManager.addRequest(BookPublishRequest.builder()
-                    .withPublishingRecordId(bookPublishRequest.getPublishingRecordId())
-                    .withBookId(generatedBookId)
-                    .withText(request.getText()).withTitle(request.getTitle())
-                    .withAuthor(request.getAuthor())
-                    .withGenre(BookGenre.valueOf(request.getGenre()))
-                    .build());
+        App.logger.info("Processing Publishing Submit Book Request: " + new Gson().toJson(request));
+        if (StringUtils.isNotBlank(request.getBookId())) {
+                catalogDao.isExsitingCatalogItem(request.getBookId())
+                        .orElseThrow(() -> new BookNotFoundException(
+                                String.format("could not find [%s] in CatalogItemsTable", request.getBookId())));
         }
 
-        App.logger.info("Processing Publishing Submit Book Request: " + new Gson().toJson(request));
+        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
         BookPublishingManager.addRequest(bookPublishRequest);
         String bookPublishRequestId = bookPublishRequest.getBookId();
         String publishingRecordId = bookPublishRequest.getPublishingRecordId();
 
-        if (StringUtils.isNotBlank(request.getBookId())) {
-                CatalogItemVersion c = catalogDao.isExsitingCatalogItem(request.getBookId())
-                        .orElseThrow(() -> new BookNotFoundException(
-                                String.format("could not find [%s] in CatalogItemsTable", request.getBookId())));
-//                BookPublishingManager.addRequest(BookPublishRequest.builder()
-//                        .withPublishingRecordId(publishingRecordId).withBookId(c.getBookId())
-//                        .withText(c.getText()).withTitle(c.getTitle())
-//                        .withGenre(BookGenre.valueOf(request.getGenre()))
-//                        .build());
-//
-//                catalogDao.saveItem(c);
-
-        }
 
         PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
                 publishingRecordId,

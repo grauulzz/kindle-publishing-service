@@ -11,11 +11,7 @@ import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPubli
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 
@@ -31,33 +27,10 @@ public class BookPublishTask implements Callable<CatalogItemVersion> {
 
     @Override
     public CatalogItemVersion call() throws Exception {
-
-        publishWithId(request);
-
         return CATALOG_DAO.isExsitingCatalogItem(request.getBookId())
                 .orElseThrow(() -> new Exception("Catalog item not found"));
     }
 
-    private static void publishWithId(BookPublishRequest request) {
-        CatalogItemVersion item = new CatalogItemVersion();
-        item.setBookId(request.getBookId());
-        item.setGenre(request.getGenre());
-        item.setAuthor(request.getAuthor());
-        item.setText(request.getText());
-        item.setTitle(request.getTitle());
-        CATALOG_DAO.saveItem(item);
-    }
-
-    private static void publishWithoutId(BookPublishRequest request) {
-        CatalogItemVersion item = new CatalogItemVersion();
-        String generatedBookId = KindlePublishingUtils.generateBookId();
-        item.setBookId(generatedBookId);
-        item.setGenre(request.getGenre());
-        item.setAuthor(request.getAuthor());
-        item.setText(request.getText());
-        item.setTitle(request.getTitle());
-        CATALOG_DAO.saveItem(item);
-    }
 
     static ExecutorService createExecutor() {
         return new ThreadPoolExecutor(
@@ -67,6 +40,8 @@ public class BookPublishTask implements Callable<CatalogItemVersion> {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>());
     }
+
+
 
 }
 
@@ -147,3 +122,55 @@ public class BookPublishTask implements Callable<CatalogItemVersion> {
 //                                       } catch (InterruptedException | ExecutionException e) {
 //                                       e.printStackTrace();
 //                                       }
+
+
+//public class BookPublishTask implements Callable<CatalogItemVersion> {
+//
+//    public static final CatalogDao CATALOG_DAO = App.component.provideCatalogDao();
+//    public static final PublishingStatusDao PUBLISHING_STATUS_DAO = App.component.providePublishingStatusDao();
+//    private final BookPublishRequest request;
+//
+//    BookPublishTask(BookPublishRequest request) {
+//        this.request = request;
+//    }
+//
+//    @Override
+//    public CatalogItemVersion call() throws Exception {
+//
+//        publishWithId(request);
+//
+//        return CATALOG_DAO.isExsitingCatalogItem(request.getBookId())
+//                .orElseThrow(() -> new Exception("Catalog item not found"));
+//    }
+//
+//    private static void publishWithId(BookPublishRequest request) {
+//        CatalogItemVersion item = new CatalogItemVersion();
+//        item.setBookId(request.getBookId());
+//        item.setGenre(request.getGenre());
+//        item.setAuthor(request.getAuthor());
+//        item.setText(request.getText());
+//        item.setTitle(request.getTitle());
+//        CATALOG_DAO.saveItem(item);
+//    }
+//
+//    private static void publishWithoutId(BookPublishRequest request) {
+//        CatalogItemVersion item = new CatalogItemVersion();
+//        String generatedBookId = KindlePublishingUtils.generateBookId();
+//        item.setBookId(generatedBookId);
+//        item.setGenre(request.getGenre());
+//        item.setAuthor(request.getAuthor());
+//        item.setText(request.getText());
+//        item.setTitle(request.getTitle());
+//        CATALOG_DAO.saveItem(item);
+//    }
+//
+//    static ExecutorService createExecutor() {
+//        return new ThreadPoolExecutor(
+//                0,
+//                Integer.MAX_VALUE,
+//                60,
+//                TimeUnit.SECONDS,
+//                new LinkedBlockingQueue<Runnable>());
+//    }
+//
+//}

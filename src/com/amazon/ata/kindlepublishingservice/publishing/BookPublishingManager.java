@@ -8,9 +8,11 @@ import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
+import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.response.FormatResponse;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.amazonaws.util.StringUtils;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -55,18 +57,33 @@ public class BookPublishingManager implements Runnable {
         App.logger.info("...");
         while (queueHasNextRequest()) {
             BookPublishRequest request = nextRequest();
-            BookPublishTask task =  new BookPublishTask(request);
-
-
-            ExecutorService executorService = BookPublishTask.createExecutor();
-            Future<CatalogItemVersion> result = executorService.submit(task);
-
-            try {
-                CatalogItemVersion item = result.get();
-                System.out.println(FormatResponse.toJsonWithColor(item));
-            } catch (InterruptedException | ExecutionException e) {
-                executorService.shutdown();
+            if (request == null) {
+                return;
             }
+            App.logger.info("processing request");
+            String requestBookId = request.getBookId();
+            pDao.setPublishingStatus(request.getPublishingRecordId(),
+                    PublishingRecordStatus.IN_PROGRESS, requestBookId);
+
+            KindleFormattedBook kindleBook = KindleFormatConverter.format(request);
+
+            // if the request doesn't have a book id generate a new one with KindlePublishingUtils
+             cDao.saveIfPresentElseGenerateId(kindleBook);
+
+
+
+            Optional<CatalogItemVersion> optionalItem = cDao.isExsitingCatalogItem(requestBookId);
+
+            CatalogItemVersion presentItem = optionalItem.orElseGet(() -> {
+                PublishingStatusItem i = pDao.setPublishingStatus(request.getPublishingRecordId(),
+                        PublishingRecordStatus.FAILED, requestBookId);
+                pDao.save(i);
+                throw new BookNotFoundException("Failure to find book with id: " + requestBookId);
+            });
+
+            pDao.setPublishingStatus(request.getPublishingRecordId(),
+                    PublishingRecordStatus.SUCCESSFUL, presentItem.getBookId());
+
         }
     }
 
@@ -85,7 +102,11 @@ public class BookPublishingManager implements Runnable {
 
 
 
-
+//    CatalogItemVersion item = optionalItem.orElseGet(() -> {
+//        CatalogItemVersion generatedBookIdItem = new CatalogItemVersion();
+//        generatedBookIdItem.setBookId(KindlePublishingUtils.generateBookId());
+//        return generatedBookIdItem;
+//    });
 
 
 

@@ -31,7 +31,7 @@ public class GetPublishingStatusActivity {
             throw new PublishingStatusNotFoundException(String.format("No Publishing history available for [%s]", id));
         }
         Set<String> hashKeys = publishingRecords.keySet();
-        hashKeys.forEach(publishingStatusDao::saveByHashKey);
+        hashKeys.forEach(publishingStatusDao::saveIfPresent);
 
         return GetPublishingStatusResponse.builder()
                 .withPublishingStatusHistory(records)

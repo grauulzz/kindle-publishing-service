@@ -8,6 +8,8 @@ import com.amazon.ata.kindlepublishingservice.models.Book;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormatConverter;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
+import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 
@@ -91,6 +93,29 @@ public class CatalogDao {
                 .getBookId().equals(bookId)).findFirst();
     }
 
+    // make this a completable future so PublishingStatus table can update the corresponding record to SUCCESSFUL
+    public void createItem(String id, String title, String author, BookGenre genre, String text) {
+        CatalogItemVersion item = new CatalogItemVersion();
+        item.setBookId(id);
+        item.setTitle(title);
+        item.setAuthor(author);
+        item.setGenre(genre);
+        item.setText(text);
+        dynamoDbMapper.save(item);
+    }
+
+    public void saveIfPresentElseGenerateId(KindleFormattedBook kindleBook) {
+        CatalogItemVersion exsitingItem = isExsitingCatalogItem(kindleBook.getBookId()).orElseGet(() -> {
+            CatalogItemVersion item = new CatalogItemVersion();
+            item.setBookId(KindlePublishingUtils.generateBookId());
+            item.setTitle(kindleBook.getTitle());
+            item.setAuthor(kindleBook.getAuthor());
+            item.setGenre(kindleBook.getGenre());
+            item.setText(kindleBook.getText());
+            return item;
+        });
+        saveItem(exsitingItem);
+    }
 }
 
 
