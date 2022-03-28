@@ -1,20 +1,19 @@
 package com.amazon.ata.kindlepublishingservice.dao;
 
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
-import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 
-import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
+import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
+import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.model.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -76,23 +75,24 @@ public class CatalogDao {
         dynamoDbMapper.save(version);
     }
 
-    public CatalogItemVersion filterBookIdWithAttribute(String bookId, String attr) {
-        ScanRequest scanRequest = new ScanRequest();
-        scanRequest.addScanFilterEntry("bookId", new Condition()
-                .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue(attr).withS(bookId)));
+    public List<CatalogItemVersion> getCatalogItemsList() {
+        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
+                .scan(new ScanRequest("CatalogItemVersions"));
 
-        ScanResult result = DynamoDbClientProvider.getDynamoDBClient().scan(scanRequest);
-
-        return result.getItems()
-                .stream()
-                .map(i -> this.dynamoDbMapper
-                        .marshallIntoObject(CatalogItemVersion.class, i))
-                .findFirst()
-                .orElseThrow(() -> new BookNotFoundException(String
-                        .format("No book found for id: [%s]", bookId)));
+        return result.getItems().stream()
+                .map(item -> this.dynamoDbMapper
+                        .marshallIntoObject(CatalogItemVersion.class, item))
+                .collect(Collectors.toList());
     }
 
+    public Optional<CatalogItemVersion> isExsitingCatalogItem(String bookId) {
+        return getCatalogItemsList().stream().filter(item -> item
+                .getBookId().equals(bookId)).findFirst();
+    }
+
+    public <U> CatalogItemVersion load(String id) {
+        return dynamoDbMapper.load(CatalogItemVersion.class, id);
+    }
 }
 
 

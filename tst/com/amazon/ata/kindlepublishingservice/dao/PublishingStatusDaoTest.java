@@ -8,6 +8,9 @@ import com.amazon.ata.kindlepublishingservice.exceptions.PublishingStatusNotFoun
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
+import java.util.ArrayList;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -102,4 +105,6 @@ public class PublishingStatusDaoTest {
         assertTrue(status.getStatusMessage().contains("Failed due to..."), "If a message is provided it should be" +
                 "included in the status message.");
     }
+
+
 }

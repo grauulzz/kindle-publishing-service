@@ -1,3 +1,16 @@
-aws cloudformation create-stack --region us-west-2 --stack-name kindlepublishingservice-createtables --template-body file://configurations/tables.template.yml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --region us-east-1 --stack-name kindlepublishingservice-createtables --template-body file://configurations/tables.template.yml --capabilities CAPABILITY_IAM
 aws dynamodb batch-write-item --request-items file://configurations/PublishingStatusData.json
 aws dynamodb batch-write-item --request-items file://configurations/CatalogItemVersionsData.json
+
+
+The purpose
+of this ALB (Application Load Balancer) will be to provide a publicly accessible URL which
+we can send HTTP requests to, and to distribute network traffic across the two duplicate
+Task instances we are going to set up for our project.
+
+While one Task is busy, the ALB will
+automatically direct incoming traffic to the second Task
+
+[docker image url]
+public.ecr.aws/a3m1q8y0/kindle-repository:latest
+

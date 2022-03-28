@@ -25,7 +25,7 @@ public class RemoveBookFromCatalogResponse {
         return scanRequest;
     }
 
-    private ScanResult getScanResult() {
+    public ScanResult getScanResult() {
         return scanResult;
     }
 
