@@ -48,3 +48,14 @@ public class Controller {
         return new ResponseEntity<>(activity.execute(req), HttpStatus.OK);
     }
 }
+//    @Async
+//    @PostMapping(value = "/books")
+//    public CompletableFuture<ResponseEntity<SubmitBookForPublishingResponse>> submitBookForPublishing(
+//            @Valid @RequestBody SubmitBookForPublishingRequest request)
+//    {
+//        return CompletableFuture.supplyAsync(() -> {
+//            SubmitBookForPublishingActivity activity = new SubmitBookForPublishingActivity();
+//            SubmitBookForPublishingResponse response = activity.execute(request);
+//            return new ResponseEntity<>(response, HttpStatus.OK);
+//        });
+//    }

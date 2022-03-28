@@ -10,11 +10,20 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class NoOpTaskTest {
-    private static final CatalogDao cDao = App.component.provideCatalogDao();
+    private final BookPublishRequest request = BookPublishRequest.builder()
+            .withBookId("test-book-publisher-manager")
+            .withAuthor("a")
+            .withGenre(BookGenre.ACTION)
+            .withText("...")
+            .withTitle("t")
+            .withPublishingRecordId("publishingid")
+            .build();
     @Test
     void run_completesSuccessfully() {
         // GIVEN
-        BookPublishingManager task = new BookPublishingManager();
+        BookPublishingManager.addRequest(request);
+
+        BookPublishTask task = new BookPublishTask();
         SubmitBookForPublishingResponse response = App.component.provideSubmitBookForPublishingActivity()
                 .execute(SubmitBookForPublishingRequest.builder()
 //                        .withBookId("test-book-publisher-manager")
@@ -23,20 +32,13 @@ class NoOpTaskTest {
                         .withText("...")
                         .withTitle("t")
                         .build());
-//        BookPublishingManager.addRequest(BookPublishRequest.builder()
-//                .withBookId("test-book-publisher-manager")
-//                .withAuthor("a")
-//                .withGenre(BookGenre.ACTION)
-//                .withText("...")
-//                .withTitle("t")
-//                .withPublishingRecordId("publishingid")
-//                .build());
 
-        // WHEN && THEN
-        task.run();
+        try {
+            task.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         assert response.getPublishingRecordId() != null;
-//        Optional<CatalogItemVersion> c = cDao.isExsitingCatalogItem("test-book-publisher-manager");
-//        assert c.isPresent();
     }
 
 }

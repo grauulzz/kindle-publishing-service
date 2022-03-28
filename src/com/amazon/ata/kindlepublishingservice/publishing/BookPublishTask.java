@@ -1,129 +1,176 @@
 package com.amazon.ata.kindlepublishingservice.publishing;
 
-import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
-import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
+import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
+import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import com.amazon.ata.recommendationsservice.types.BookGenre;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import javax.inject.Inject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import static com.amazon.ata.kindlepublishingservice.App.*;
 
 
-public class BookPublishTask implements Callable<CatalogItemVersion> {
+public class BookPublishTask implements Runnable {
+    private static final Logger LOGGER = LogManager.getLogger(BookPublisher.class);
+    private static final PublishingStatusDao PUBLISHING_STATUS_DAO = component.providePublishingStatusDao();
+    private static final CatalogDao CATALOG_DAO = component.provideCatalogDao();
 
-    public static final CatalogDao CATALOG_DAO = App.component.provideCatalogDao();
-    public static final PublishingStatusDao PUBLISHING_STATUS_DAO = App.component.providePublishingStatusDao();
-    private final BookPublishRequest request;
-
-    BookPublishTask(BookPublishRequest request) {
-        this.request = request;
-    }
+    @Inject
+    public BookPublishTask() {}
 
     @Override
-    public CatalogItemVersion call() throws Exception {
-        return CATALOG_DAO.isExsitingCatalogItem(request.getBookId())
-                .orElseThrow(() -> new Exception("Catalog item not found"));
+    public void run() {
+        LOGGER.info("Book publish task");
+        while(BookPublishingManager.queueHasNextRequest()) {
+            BookPublishRequest request = BookPublishingManager.nextRequest();
+            if (request == null) {
+                return;
+            }
+            String publishingRecordId = request.getPublishingRecordId();
+            String requestBookId = request.getBookId();
+
+            markInProgress(request, requestBookId);
+
+            if (requestBookId != null) {
+                CompletableFuture<CatalogItemVersion> getBookFromCatalog =
+                        CompletableFuture.supplyAsync(() -> CATALOG_DAO.getBookFromCatalog(requestBookId));
+                try {
+                    CatalogItemVersion item = waitForExistingItemHandling(publishingRecordId,
+                            publishingRecordId, getBookFromCatalog);
+                    publishNewVersion(request, publishingRecordId, item);
+                } catch (InterruptedException | ExecutionException e) {
+                    markFailed(publishingRecordId, requestBookId);
+                    e.printStackTrace();
+                }
+            }
+
+            String bookId = KindlePublishingUtils.generateBookId();
+            publish(request, bookId);
+
+            CompletableFuture<CatalogItemVersion> futureSubmission =
+                    CompletableFuture.supplyAsync(() -> CATALOG_DAO.load(bookId));
+
+            waitForNewItemHandling(publishingRecordId, bookId, futureSubmission);
+        }
     }
 
+    private void publishNewVersion(BookPublishRequest request, String publishingRecordId,
+                                       CatalogItemVersion currentVersion) {
+        KindleFormattedBook kindleFormat = KindleFormatConverter.format(request);
+        String text = kindleFormat.getText();
+        String title = kindleFormat.getTitle();
+        String author = kindleFormat.getAuthor();
+        BookGenre genre = kindleFormat.getGenre();
 
-    static ExecutorService createExecutor() {
-        return new ThreadPoolExecutor(
-                0,
-                Integer.MAX_VALUE,
-                60,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>());
+        CatalogItemVersion newVersion = new CatalogItemVersion();
+        newVersion.setVersion(currentVersion.getVersion() + 1);
+        newVersion.setBookId(currentVersion.getBookId());
+        newVersion.setText(text);
+        newVersion.setTitle(title);
+        newVersion.setAuthor(author);
+        newVersion.setGenre(genre);
+        markSuccessful(publishingRecordId, newVersion);
+        CATALOG_DAO.saveItem(newVersion);
     }
 
+    private void publish(BookPublishRequest request, String bookId) {
+        KindleFormattedBook kindleFormat = KindleFormatConverter.format(request);
+        CatalogItemVersion catalogItemVersion = new CatalogItemVersion();
+        catalogItemVersion.setBookId(bookId);
+        catalogItemVersion.setTitle(kindleFormat.getTitle());
+        catalogItemVersion.setAuthor(kindleFormat.getAuthor());
+        catalogItemVersion.setGenre(kindleFormat.getGenre());
+        catalogItemVersion.setText(kindleFormat.getText());
+        CATALOG_DAO.saveItem(catalogItemVersion);
+    }
 
+    private CatalogItemVersion waitForExistingItemHandling(String publishingRecordId,
+                                                           String requestBookId,
+                                                           CompletableFuture<CatalogItemVersion> future)
+            throws ExecutionException, InterruptedException {
+        future.whenComplete((catalogItemVersion, throwable) ->  {
+            if (catalogItemVersion != null) {
+                markSuccessful(publishingRecordId, catalogItemVersion);
+                markPreviousVersionInactive(catalogItemVersion.getBookId());
+            }
+            markFailed(publishingRecordId, requestBookId);
+            throw new BookNotFoundException("Something went terribly wrong");
+        });
+        return future.get();
+    }
+
+    private void waitForNewItemHandling(String publishingRecordId, String generatedBookId,
+                                        CompletableFuture<CatalogItemVersion> future) {
+        future.thenAccept(item -> {
+            if (item != null) {
+                item.setVersion(1);
+                CATALOG_DAO.saveItem(item);
+                markSuccessful(publishingRecordId, item);
+            }
+            markFailed(publishingRecordId, generatedBookId);
+            throw new BookNotFoundException("Something went terribly wrong");
+        });
+    }
+
+    private void markInProgress(BookPublishRequest request, String requestBookId) {
+        PublishingStatusItem inProgressItem = PUBLISHING_STATUS_DAO.setPublishingStatus(request.getPublishingRecordId(), PublishingRecordStatus.IN_PROGRESS, requestBookId);
+        PUBLISHING_STATUS_DAO.save(inProgressItem);
+    }
+
+    private void markSuccessful(String publishingRecordId, CatalogItemVersion item) {
+        PublishingStatusItem successfulItem = PUBLISHING_STATUS_DAO.setPublishingStatus(publishingRecordId, PublishingRecordStatus.SUCCESSFUL, item.getBookId());
+        PUBLISHING_STATUS_DAO.save(successfulItem);
+    }
+
+    private void markFailed(String publishingRecordId, String requestBookId) {
+        PublishingStatusItem failedItem = PUBLISHING_STATUS_DAO.setPublishingStatus(publishingRecordId, PublishingRecordStatus.SUCCESSFUL, requestBookId);
+        PUBLISHING_STATUS_DAO.save(failedItem);
+    }
+
+    private RemoveBookFromCatalogResponse markPreviousVersionInactive(String requestBookId) {
+        return component.provideRemoveBookFromCatalogActivity()
+                .execute(RemoveBookFromCatalogRequest.builder()
+                        .withBookId(requestBookId)
+                        .build());
+    }
 
 }
 
 
-
-
-
-
-
-
-//        BookPublishingManager.publishToCatalog(request);
-//        GetPublishingStatusRequest getPublishingStatusRequest = GetPublishingStatusRequest.builder().withPublishingRecordId(request.getPublishingRecordId()).build();
+//                CompletableFuture<CatalogItemVersion> loadItem =
+//                        CompletableFuture.supplyAsync(() -> CATALOG_DAO.load(requestBookId));
+//                CatalogItemVersion existingItem = null;
+//                try {
+//                    existingItem = onCompletionExistingItem(publishingRecordId, requestBookId, loadItem);
+//                } catch (ExecutionException | InterruptedException e) {
+//                    e.printStackTrace();
+//                }
 //
-//        GetBookRequest getBookRequest = GetBookRequest.builder().withBookId(request.getBookId()).build();
-//        GetBookResponse response = App.component.provideGetBookActivity().execute(getBookRequest);
-//        if (response.)
-
-
-
-//    public static List<BookPublishTask> createTasks(List<BookPublishRequest> requests) {
-//        List<BookPublishTask> tasks = new ArrayList<BookPublishTask>();
-//        for (BookPublishRequest request : requests) {
-//            tasks.add(new BookPublishTask(request));
-//        }
-//        return tasks;
-//    }
+//                if (existingItem != null) {
 //
-//    public static List<BookPublishRequest> executeTasks(List<BookPublishTask> tasks, ExecutorService executor) {
-//        List<BookPublishRequest> requests = new ArrayList<BookPublishRequest>();
-//        List<Future<BookPublishRequest>> futures = new ArrayList<Future<BookPublishRequest>>();
-//        for (BookPublishTask task : tasks) {
-//            futures.add(executor.submit(task));
-//        }
-//        for (Future<BookPublishRequest> future : futures) {
-//            try {
-//                requests.add(future.get());
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            } catch (ExecutionException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-//        return requests;
-//    }
-
-
-
-
-
-
-//    ExecutorService executorService =
-//            new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-//                    new LinkedBlockingQueue<Runnable>());
 //
-//    Runnable runnableTask = () -> {
-//        try {
-//            TimeUnit.MILLISECONDS.sleep(300);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    };
+//                CatalogItemVersion item = component.provideCatalogDao().isExsitingCatalogItem(requestBookId)
+//                        .orElseThrow(() -> new RuntimeException("Request had a bookId present, but no book was found in catalog"));
 //
-//    Callable<String> callableTask = () -> {
-//        TimeUnit.MILLISECONDS.sleep(300);
-//        return "Task's execution";
-//    };
-//
-//    List<Callable<String>> callableTasks = new ArrayList<>();
-//        callableTasks.add(callableTask);
-//                callableTasks.add(callableTask);
-//                callableTasks.add(callableTask);
-//
-//                executorService.execute(runnableTask);
-//
-//                Future<String> future = executorService.submit(callableTask);
-//                                       try {
-//                                       String result = executorService.invokeAny(callableTasks);
-//                                       } catch (InterruptedException | ExecutionException e) {
-//                                       e.printStackTrace();
-//                                       }
+//                CompletableFuture<GetItemResult> catalogItem = DynamoDBAsync.createCompletableFuture(
+//            "CatalogItemVersions", "bookId", item.getBookId(), "status",
+//                        item.getVersion());
 
-
+//            if (request.getBookId() == null) {
+//                    KindleFormattedBook kindleFormattedBook = KindleFormattedBook.builder().withBookId(KindlePublishingUtils.generateBookId()).withAuthor(request.getAuthor()).withGenre(request.getGenre()).withText(KindleConversionUtils.convertTextToKindleFormat(request.getText())).withTitle(request.getTitle()).build();
+//
+//                    }
+//
+//                    KindleFormattedBook requestWithNonNullId = KindleFormatConverter.format(request);
 //public class BookPublishTask implements Callable<CatalogItemVersion> {
 //
 //    public static final CatalogDao CATALOG_DAO = App.component.provideCatalogDao();
@@ -136,33 +183,12 @@ public class BookPublishTask implements Callable<CatalogItemVersion> {
 //
 //    @Override
 //    public CatalogItemVersion call() throws Exception {
-//
-//        publishWithId(request);
-//
 //        return CATALOG_DAO.isExsitingCatalogItem(request.getBookId())
 //                .orElseThrow(() -> new Exception("Catalog item not found"));
 //    }
 //
-//    private static void publishWithId(BookPublishRequest request) {
-//        CatalogItemVersion item = new CatalogItemVersion();
-//        item.setBookId(request.getBookId());
-//        item.setGenre(request.getGenre());
-//        item.setAuthor(request.getAuthor());
-//        item.setText(request.getText());
-//        item.setTitle(request.getTitle());
-//        CATALOG_DAO.saveItem(item);
-//    }
 //
-//    private static void publishWithoutId(BookPublishRequest request) {
-//        CatalogItemVersion item = new CatalogItemVersion();
-//        String generatedBookId = KindlePublishingUtils.generateBookId();
-//        item.setBookId(generatedBookId);
-//        item.setGenre(request.getGenre());
-//        item.setAuthor(request.getAuthor());
-//        item.setText(request.getText());
-//        item.setTitle(request.getTitle());
-//        CATALOG_DAO.saveItem(item);
-//    }
+//
 //
 //    static ExecutorService createExecutor() {
 //        return new ThreadPoolExecutor(
@@ -174,3 +200,26 @@ public class BookPublishTask implements Callable<CatalogItemVersion> {
 //    }
 //
 //}
+
+
+
+
+
+//                CompletableFuture<Integer> httpStatus =
+//                        CompletableFuture.supplyAsync(() -> markPreviousVersionInactive(requestBookId));
+//                    httpStatus.thenAccept(response -> {
+//                        if (response == 200) {
+//                            publishNewVersion(request, publishingRecordId,
+//                                    catalogItemVersion);
+//                        }
+//                        System.out.println("HTTP status: " + response);
+//                    });
+//
+//                getBookFromCatalog.whenComplete((catalogItemVersion, throwable) -> {
+//                    if (throwable != null) {
+//                        markFailed(publishingRecordId, requestBookId);
+//                        throwable.printStackTrace();
+//                        throw new BookNotFoundException("Something went terribly wrong");
+//                    }
+//
+//                });

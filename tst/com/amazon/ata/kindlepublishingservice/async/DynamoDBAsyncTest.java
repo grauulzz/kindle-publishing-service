@@ -9,11 +9,9 @@ import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ListTablesRequest;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.util.StringUtils;
 
 
 class DynamoDBAsyncTest {
@@ -51,8 +49,10 @@ class DynamoDBAsyncTest {
 //        Set<String> result = DynamoDBAsync.processFutureGetItemResult(item);
 //        System.out.println("yay! (from tst): \n" + FormatResponse.toJsonWithColor(result));
 //        assert StringUtils.isNotBlank(String.join("", result));
-        assert HttpOps.getHttpStatus(item) == 200;
+        assert DynamoDBAsync.getHttpStatusGetITem(item) == 200;
     }
+
+
 
 
 

@@ -109,7 +109,7 @@ public class PublishingStatusDao {
         }
     }
 
-    private List<PublishingStatusItem> getPublishingStatusList() {
+    public List<PublishingStatusItem> getPublishingStatusList() {
         ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
                 .scan(new ScanRequest("PublishingStatus"));
 

@@ -2,6 +2,9 @@ package com.amazon.ata.kindlepublishingservice.models.requests;
 
 import com.amazon.ata.kindlepublishingservice.models.Book;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+
 
 public class SubmitBookForPublishingRequest {
     private String bookId;
