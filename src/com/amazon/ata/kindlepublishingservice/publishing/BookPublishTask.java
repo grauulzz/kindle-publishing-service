@@ -59,7 +59,7 @@ public class BookPublishTask implements Runnable {
                     CatalogItemVersion item = waitForExistingItemHandling(publishingRecordId,
                             publishingRecordId, getBookFromCatalog);
 
-                    publishNewVersion(request, publishingRecordId, item);
+                    catalogDao.publishNewVersion(request,  item);
                     publishingStatusDao.markSuccessful(publishingRecordId, item);
 
                 } catch (InterruptedException | ExecutionException e) {
@@ -73,11 +73,13 @@ public class BookPublishTask implements Runnable {
 
             try {
                 CompletableFuture.supplyAsync(() -> catalogDao.load(bookId))
-                        .thenApply(item -> {
-                            if (item != null) {
-                                item.setVersion(1);
-                                catalogDao.saveItem(item);
-                                publishingStatusDao.markSuccessful(publishingRecordId, item);
+                        .thenCompose(item -> {
+                            try {
+                                item.get().setVersion(1);
+                                catalogDao.saveItem(item.get());
+                                publishingStatusDao.markSuccessful(publishingRecordId, item.get());
+                            } catch (InterruptedException | ExecutionException e) {
+                                e.printStackTrace();
                             }
                             publishingStatusDao.markFailed(publishingRecordId, bookId);
                             throw new BookNotFoundException("Something went terribly wrong");
@@ -118,24 +120,6 @@ public class BookPublishTask implements Runnable {
                             catalogItemVersion.getBookId());
                     throw new BookNotFoundException("Something went terribly wrong");
                 });
-    }
-
-    private void publishNewVersion(BookPublishRequest request, String publishingRecordId,
-                                   CatalogItemVersion currentVersion) {
-        KindleFormattedBook kindleFormat = KindleFormatConverter.format(request);
-        String text = kindleFormat.getText();
-        String title = kindleFormat.getTitle();
-        String author = kindleFormat.getAuthor();
-        BookGenre genre = kindleFormat.getGenre();
-
-        CatalogItemVersion newVersion = new CatalogItemVersion();
-        newVersion.setVersion(currentVersion.getVersion() + 1);
-        newVersion.setBookId(currentVersion.getBookId());
-        newVersion.setText(text);
-        newVersion.setTitle(title);
-        newVersion.setAuthor(author);
-        newVersion.setGenre(genre);
-        catalogDao.saveItem(newVersion);
     }
 }
 

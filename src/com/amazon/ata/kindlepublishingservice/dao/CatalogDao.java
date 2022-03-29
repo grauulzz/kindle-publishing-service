@@ -7,6 +7,7 @@ import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormatConverter;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
+import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
@@ -14,8 +15,10 @@ import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import org.springframework.scheduling.annotation.Async;
 
 public class CatalogDao {
 
@@ -118,13 +121,14 @@ public class CatalogDao {
      * @throws DynamoDBMappingException the dynamo db mapping exception
      * @throws BookNotFoundException    the book not found exception
      */
-    public <U> CatalogItemVersion load(String id) throws DynamoDBMappingException, BookNotFoundException {
+
+    public <U> CompletableFuture<CatalogItemVersion> load(String id) throws DynamoDBMappingException, BookNotFoundException {
 
         CatalogItemVersion item = db.load(CatalogItemVersion.class, id);
         if (item == null) {
             throw new BookNotFoundException("Book not found on load from db");
         }
-        return item;
+        return CompletableFuture.completedFuture(item);
     }
 
     /**
@@ -142,6 +146,29 @@ public class CatalogDao {
         catalogItemVersion.setGenre(kindleFormat.getGenre());
         catalogItemVersion.setText(kindleFormat.getText());
         saveItem(catalogItemVersion);
+    }
+
+    /**
+     * Publish new version.
+     *
+     * @param request        the request
+     * @param currentVersion the current version
+     */
+    public void publishNewVersion(BookPublishRequest request, CatalogItemVersion currentVersion) {
+        KindleFormattedBook kindleFormat = KindleFormatConverter.format(request);
+        String text = kindleFormat.getText();
+        String title = kindleFormat.getTitle();
+        String author = kindleFormat.getAuthor();
+        BookGenre genre = kindleFormat.getGenre();
+
+        CatalogItemVersion newVersion = new CatalogItemVersion();
+        newVersion.setVersion(currentVersion.getVersion() + 1);
+        newVersion.setBookId(currentVersion.getBookId());
+        newVersion.setText(text);
+        newVersion.setTitle(title);
+        newVersion.setAuthor(author);
+        newVersion.setGenre(genre);
+        saveItem(newVersion);
     }
 }
 
