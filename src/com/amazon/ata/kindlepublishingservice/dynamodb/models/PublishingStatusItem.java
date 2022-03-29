@@ -1,8 +1,8 @@
 package com.amazon.ata.kindlepublishingservice.dynamodb.models;
 
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
-
 import com.amazonaws.services.dynamodbv2.datamodeling.*;
+import java.util.Objects;
 
 @DynamoDBTable(tableName = "PublishingStatus")
 public class PublishingStatusItem {
@@ -19,8 +19,6 @@ public class PublishingStatusItem {
     public void setPublishingRecordId(String publishingRecordId) {
         this.publishingRecordId = publishingRecordId;
     }
-
-//    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
 
     @DynamoDBTypeConvertedEnum
     @DynamoDBRangeKey(attributeName = "status")

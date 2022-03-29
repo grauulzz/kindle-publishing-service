@@ -1,5 +1,6 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
+import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
@@ -58,7 +59,7 @@ public class SubmitBookForPublishingActivityTest {
                 eq(request.getBookId()))).thenReturn(item);
 
         // WHEN
-        SubmitBookForPublishingResponse response = activity.execute(request);
+        SubmitBookForPublishingResponse response = App.component.provideSubmitBookForPublishingActivity().execute(request);
 
         // THEN
         assertEquals("publishing.123", response.getPublishingRecordId(), "Expected response to return a publishing" +

@@ -1,13 +1,12 @@
 package com.amazon.ata.kindlepublishingservice.publishing;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class responsible for executing publishing tasks. The publisher is created in an off state. A call to start will
@@ -26,7 +25,7 @@ public class BookPublisher {
      * Instantiates a new BookPublisher object.
      *
      * @param scheduledExecutorService will schedule publishing tasks
-     * @param publishTask the task that should be scheduled to publish books
+     * @param publishTask              the task that should be scheduled to publish books
      */
     @Inject
     public BookPublisher(ScheduledExecutorService scheduledExecutorService,
@@ -56,6 +55,7 @@ public class BookPublisher {
 
     /**
      * Returns true if the publisher is currently working to publish books and false otherwise.
+     *
      * @return if the publisher is currently processing.
      */
     @VisibleForTesting

@@ -23,10 +23,9 @@ class NoOpTaskTest {
         // GIVEN
         BookPublishingManager.addRequest(request);
 
-        BookPublishTask task = new BookPublishTask();
+        BookPublishTask task = App.component.provideBookPublishTask();
         SubmitBookForPublishingResponse response = App.component.provideSubmitBookForPublishingActivity()
                 .execute(SubmitBookForPublishingRequest.builder()
-//                        .withBookId("test-book-publisher-manager")
                         .withAuthor("a")
                         .withGenre(String.valueOf(BookGenre.ACTION))
                         .withText("...")

@@ -2,27 +2,24 @@ package com.amazon.ata.kindlepublishingservice.dao;
 
 import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
 import com.amazon.ata.kindlepublishingservice.App;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
-import com.amazon.ata.kindlepublishingservice.models.PublishingStatusRecord;
+import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
-
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.model.*;
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import javax.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.inject.Inject;
-
-/**
- * Accesses the Publishing Status table.
- */
 public class PublishingStatusDao {
-//    private static final AmazonDynamoDB client = DynamoDbClientProvider.getDynamoDBClient();
     private static final String ADDITIONAL_NOTES_PREFIX = " Additional Notes: ";
     private final DynamoDBMapper db;
 
@@ -40,9 +37,10 @@ public class PublishingStatusDao {
      * Updates the publishing status table for the given publishingRecordId with the provided
      * publishingRecordStatus. If the bookId is provided it will also be stored in the record.
      *
-     * @param publishingRecordId The id of the record to update
+     * @param publishingRecordId     The id of the record to update
      * @param publishingRecordStatus The PublishingRecordStatus to save into the table.
-     * @param bookId The id of the book associated with the request, may be null
+     * @param bookId                 The id of the book associated with the request, may be null
+     *
      * @return The stored PublishingStatusItem.
      */
     public PublishingStatusItem setPublishingStatus(String publishingRecordId,
@@ -57,10 +55,11 @@ public class PublishingStatusDao {
      * publishingRecordStatus. If the bookId is provided it will also be stored in the record. If
      * a message is provided, it will be appended to the publishing status message in the datastore.
      *
-     * @param publishingRecordId The id of the record to update
+     * @param publishingRecordId     The id of the record to update
      * @param publishingRecordStatus The PublishingRecordStatus to save into the table.
-     * @param bookId The id of the book associated with the request, may be null
-     * @param message additional notes stored with the status
+     * @param bookId                 The id of the book associated with the request, may be null
+     * @param message                additional notes stored with the status
+     *
      * @return The stored PublishingStatusItem.
      */
     public PublishingStatusItem setPublishingStatus(String publishingRecordId,
@@ -70,10 +69,10 @@ public class PublishingStatusDao {
         String statusMessage = KindlePublishingUtils.generatePublishingStatusMessage(publishingRecordStatus);
         if (StringUtils.isNotBlank(message)) {
             statusMessage = new StringBuffer()
-                .append(statusMessage)
-                .append(ADDITIONAL_NOTES_PREFIX)
-                .append(message)
-                .toString();
+                    .append(statusMessage)
+                    .append(ADDITIONAL_NOTES_PREFIX)
+                    .append(message)
+                    .toString();
         }
 
         PublishingStatusItem item = new PublishingStatusItem();
@@ -85,18 +84,22 @@ public class PublishingStatusDao {
         return item;
     }
 
+    /**
+     * Save.
+     *
+     * @param item the item
+     */
     public void save(PublishingStatusItem item) {
         db.save(item);
     }
 
-    public void saveIfPresent(String hashKey) {
-        this.loadOptional(hashKey).ifPresent(this.db::save);
-    }
-
-    public Optional<PublishingStatusItem> loadOptional(String publishingRecordId) {
-        return Optional.of(db.load(PublishingStatusItem.class, publishingRecordId));
-    }
-
+    /**
+     * Load publishing status item.
+     *
+     * @param publishingRecordId the publishing record id
+     *
+     * @return the publishing status item
+     */
     public PublishingStatusItem load(String publishingRecordId) {
         try {
             return db.load(PublishingStatusItem.class, publishingRecordId);
@@ -109,6 +112,11 @@ public class PublishingStatusDao {
         }
     }
 
+    /**
+     * Gets publishing status list.
+     *
+     * @return the publishing status list
+     */
     public List<PublishingStatusItem> getPublishingStatusList() {
         ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
                 .scan(new ScanRequest("PublishingStatus"));
@@ -118,53 +126,68 @@ public class PublishingStatusDao {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Mark in progress.
+     *
+     * @param request       the request
+     * @param requestBookId the request book id
+     */
+    public void markInProgress(BookPublishRequest request, String requestBookId) {
+        PublishingStatusItem inProgressItem = setPublishingStatus(
+                request.getPublishingRecordId(), PublishingRecordStatus.IN_PROGRESS,
+                requestBookId);
+        save(inProgressItem);
+    }
 
-    public Map<String, List<PublishingStatusRecord>> getPublishingRecordHistory(String publishingRecordId) {
-        Optional<PublishingStatusItem> recordId = loadOptional(publishingRecordId);
-        Map<String, List<PublishingStatusRecord>> publishingRecords = new HashMap<>();
+    /**
+     * Mark successful.
+     *
+     * @param publishingRecordId the publishing record id
+     * @param item               the item
+     */
+    public void markSuccessful(String publishingRecordId, CatalogItemVersion item) {
+        PublishingStatusItem successfulItem = setPublishingStatus(publishingRecordId,
+                PublishingRecordStatus.SUCCESSFUL, item.getBookId());
+        save(successfulItem);
+    }
 
-        if (recordId.isPresent()) {
-            Predicate<PublishingStatusItem> predicate = item -> item.getPublishingRecordId().equals(publishingRecordId);
-            List<PublishingStatusItem> items = getPublishingStatusList();
-            Stream<PublishingStatusItem> listToMap = items
-                    .parallelStream()
-                    .filter(predicate);
+    /**
+     * Mark failed.
+     *
+     * @param publishingRecordId the publishing record id
+     * @param requestBookId      the request book id
+     */
+    public void markFailed(String publishingRecordId, String requestBookId) {
+        PublishingStatusItem failedItem = setPublishingStatus(publishingRecordId,
+                PublishingRecordStatus.SUCCESSFUL, requestBookId);
+        save(failedItem);
+    }
 
-            publishingRecords.put(publishingRecordId,
-                    listToMap.map(item -> PublishingStatusRecord.builder()
-                                    .withStatus(item.getStatus().name())
-                                    .withStatusMessage(item.getStatusMessage())
-                                    .withBookId(item.getBookId())
-                                    .build())
-                    .collect(Collectors.toList()));
 
-            return publishingRecords;
+    /**
+     * Query items by book id optional.
+     *
+     * @param bookId the book id
+     *
+     * @return the optional
+     */
+    public Optional<PublishingStatusItem> queryItemsByBookId(String bookId) {
+
+        HashMap<String, Condition> scanFilter = new HashMap<>();
+        scanFilter.put("publishingRecordId", new Condition()
+                .withComparisonOperator(ComparisonOperator.EQ)
+                .withAttributeValueList(new AttributeValue().withS(bookId)));
+
+        DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
+                .withScanFilter(scanFilter);
+
+        PaginatedScanList<PublishingStatusItem> scanResult = db.scan(
+                PublishingStatusItem.class, scanExpression);
+
+        if (!scanResult.isEmpty()) {
+            return Optional.of(scanResult.get(0));
         }
-
-        return publishingRecords;
+        return Optional.empty();
     }
-
-
-    public List<PublishingStatusItem> statusItems(PublishingRecordStatus status) {
-        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
-                .scan(new ScanRequest("PublishingStatus"));
-
-        Predicate<PublishingStatusItem> filterByStatus = item -> item.getStatus().equals(status);
-
-        return result.getItems().stream()
-                .map(item -> db.marshallIntoObject(PublishingStatusItem.class, item))
-                .filter(filterByStatus).collect(Collectors.toList());
-    }
-//    public List<PublishingStatusItem> statusItems(String id, PublishingRecordStatus status) {
-//        ScanResult result = DynamoDbClientProvider.getDynamoDBClient()
-//                .scan(new ScanRequest("PublishingStatus"));
-//
-//        Predicate<PublishingStatusItem> filterById = item -> item.getPublishingRecordId().equals(id);
-//        Predicate<PublishingStatusItem> filterByStatus = item -> item.getStatus().equals(status);
-//
-//        return result.getItems().stream()
-//                .map(item -> db.marshallIntoObject(PublishingStatusItem.class, item))
-//                .filter(filterById.and(filterByStatus)).collect(Collectors.toList());
-//    }
 
 }

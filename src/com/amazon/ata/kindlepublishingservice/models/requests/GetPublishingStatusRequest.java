@@ -2,17 +2,53 @@ package com.amazon.ata.kindlepublishingservice.models.requests;
 
 import java.util.Objects;
 
+/**
+ * The type Get publishing status request.
+ */
 public class GetPublishingStatusRequest {
     private String publishingRecordId;
 
+    /**
+     * Instantiates a new Get publishing status request.
+     *
+     * @param publishingRecordId the publishing record id
+     */
     public GetPublishingStatusRequest(String publishingRecordId) {
         this.publishingRecordId = publishingRecordId;
     }
 
+    /**
+     * Instantiates a new Get publishing status request.
+     *
+     * @param builder the builder
+     */
+    public GetPublishingStatusRequest(Builder builder) {
+        this.publishingRecordId = builder.publishingRecordId;
+    }
+
+    /**
+     * Builder builder.
+     *
+     * @return the builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Gets publishing record id.
+     *
+     * @return the publishing record id
+     */
     public String getPublishingRecordId() {
         return publishingRecordId;
     }
 
+    /**
+     * Sets publishing record id.
+     *
+     * @param publishingRecordId the publishing record id
+     */
     public void setPublishingRecordId(String publishingRecordId) {
         this.publishingRecordId = publishingRecordId;
     }
@@ -30,12 +66,9 @@ public class GetPublishingStatusRequest {
         return Objects.hash(publishingRecordId);
     }
 
-    public GetPublishingStatusRequest(Builder builder) {
-        this.publishingRecordId = builder.publishingRecordId;
-    }
-
-    public static Builder builder() {return new Builder();}
-
+    /**
+     * The type Builder.
+     */
     public static final class Builder {
         private String publishingRecordId;
 
@@ -43,11 +76,25 @@ public class GetPublishingStatusRequest {
 
         }
 
+        /**
+         * With publishing record id builder.
+         *
+         * @param publishingRecordIdToUse the publishing record id to use
+         *
+         * @return the builder
+         */
         public Builder withPublishingRecordId(String publishingRecordIdToUse) {
             this.publishingRecordId = publishingRecordIdToUse;
             return this;
         }
 
-        public GetPublishingStatusRequest build() { return new GetPublishingStatusRequest(this); }
+        /**
+         * Build get publishing status request.
+         *
+         * @return the get publishing status request
+         */
+        public GetPublishingStatusRequest build() {
+            return new GetPublishingStatusRequest(this);
+        }
     }
 }

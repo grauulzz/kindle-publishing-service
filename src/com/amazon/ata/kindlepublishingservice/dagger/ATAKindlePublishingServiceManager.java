@@ -1,12 +1,10 @@
 package com.amazon.ata.kindlepublishingservice.dagger;
 
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublisher;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * The ATAKindlePublishingServiceManager controls initializing, starting, verifying, and stopping the
@@ -21,6 +19,7 @@ public class ATAKindlePublishingServiceManager {
 
     /**
      * Construct a ATAKindlePublishingServiceManager.
+     *
      * @param bookPublisher handles asynchronous publishing of books
      */
     @Inject

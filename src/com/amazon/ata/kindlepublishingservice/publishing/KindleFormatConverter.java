@@ -7,20 +7,23 @@ import com.amazon.ata.kindlepublishing.utils.KindleConversionUtils;
  */
 public final class KindleFormatConverter {
 
-    private KindleFormatConverter(){}
+    private KindleFormatConverter() {
+    }
 
     /**
      * Formats the book fields in the provided publishRequest into their kindle format version.
+     *
      * @param publishRequest contains information about a book to be published
+     *
      * @return returns a kindle formatted book
      */
     public static KindleFormattedBook format(BookPublishRequest publishRequest) {
         return KindleFormattedBook.builder()
-            .withText(KindleConversionUtils.convertTextToKindleFormat(publishRequest.getText()))
-            .withAuthor(publishRequest.getAuthor())
-            .withTitle(publishRequest.getTitle())
-            .withGenre(publishRequest.getGenre())
-            .withBookId(publishRequest.getBookId())
-            .build();
+                .withText(KindleConversionUtils.convertTextToKindleFormat(publishRequest.getText()))
+                .withAuthor(publishRequest.getAuthor())
+                .withTitle(publishRequest.getTitle())
+                .withGenre(publishRequest.getGenre())
+                .withBookId(publishRequest.getBookId())
+                .build();
     }
 }

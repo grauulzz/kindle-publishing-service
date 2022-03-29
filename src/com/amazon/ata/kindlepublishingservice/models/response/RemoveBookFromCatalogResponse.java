@@ -1,12 +1,14 @@
 package com.amazon.ata.kindlepublishingservice.models.response;
 
 
-import com.amazon.ata.aws.dynamodb.DynamoDbClientProvider;
-import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import java.util.Objects;
 
+/**
+ * The type Remove book from catalog response.
+ */
 public class RemoveBookFromCatalogResponse {
 
 
@@ -14,27 +16,41 @@ public class RemoveBookFromCatalogResponse {
     private final ScanRequest scanRequest;
     private ScanResult scanResult;
 
+    /**
+     * Instantiates a new Remove book from catalog response.
+     *
+     * @param item the item
+     */
     public RemoveBookFromCatalogResponse(CatalogItemVersion item) {
         this.item = item;
         this.scanRequest = new ScanRequest("CatalogItemVersions");
     }
 
+    public int getStatusCode() {
+        return scanResult.getSdkHttpMetadata().getHttpStatusCode();
+    }
 
 
     private ScanRequest getScanRequest() {
         return scanRequest;
     }
 
+    /**
+     * Gets scan result.
+     *
+     * @return the scan result
+     */
     public ScanResult getScanResult() {
         return scanResult;
     }
 
+    /**
+     * Gets item.
+     *
+     * @return the item
+     */
     public CatalogItemVersion getItem() {
         return item;
-    }
-
-    public void setScanResult(ScanResult scanResult) {
-        this.scanResult = scanResult;
     }
 
     @Override

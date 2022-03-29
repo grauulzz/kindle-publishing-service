@@ -1,40 +1,29 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
-import com.amazon.ata.kindlepublishingservice.App;
-import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
-import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
-import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
-import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
+
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
+import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
+import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
+import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
+import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
-
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
-import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
-import com.amazon.ata.recommendationsservice.types.BookGenre;
-import com.google.gson.Gson;
-import java.util.Optional;
 import javax.inject.Inject;
-import org.junit.platform.commons.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
-/**
- * Implementation of the SubmitBookForPublishingActivity for ATACurriculumKindlePublishingService's
- * SubmitBookForPublishing API.
- *
- * This API allows the client to submit a new book to be published in the catalog or update an existing book.
- */
+
 public class SubmitBookForPublishingActivity {
 
     private final PublishingStatusDao publishingStatusDao;
     private final CatalogDao catalogDao;
 
     @Inject
-    public SubmitBookForPublishingActivity() {
-        this.publishingStatusDao = App.component.providePublishingStatusDao();
-        this.catalogDao = App.component.provideCatalogDao();
+    public SubmitBookForPublishingActivity(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao) {
+        this.publishingStatusDao = publishingStatusDao;
+        this.catalogDao = catalogDao;
     }
 
     /**
@@ -48,15 +37,15 @@ public class SubmitBookForPublishingActivity {
      * to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
-        App.logger.info("Processing Publishing Submit Book Request: " + new Gson().toJson(request));
-        if (StringUtils.isNotBlank(request.getBookId())) {
+        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+        BookPublishingManager.addRequest(bookPublishRequest);
+
+        if (StringUtils.isNotEmpty(request.getBookId())) {
                 catalogDao.isExsitingCatalogItem(request.getBookId())
                         .orElseThrow(() -> new BookNotFoundException(
                                 String.format("could not find [%s] in CatalogItemsTable", request.getBookId())));
         }
 
-        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
-        BookPublishingManager.addRequest(bookPublishRequest);
         String bookPublishRequestId = bookPublishRequest.getBookId();
         String publishingRecordId = bookPublishRequest.getPublishingRecordId();
 
