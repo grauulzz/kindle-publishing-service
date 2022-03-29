@@ -11,15 +11,26 @@ import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPubli
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
-import javax.inject.Inject;
+
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 
+
+/**
+ * The type Submit book for publishing activity.
+ */
 public class SubmitBookForPublishingActivity {
 
     private final PublishingStatusDao publishingStatusDao;
     private final CatalogDao catalogDao;
 
+    /**
+     * Instantiates a new Submit book for publishing activity.
+     *
+     * @param catalogDao          the catalog dao
+     * @param publishingStatusDao the publishing status dao
+     */
     @Inject
     public SubmitBookForPublishingActivity(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao) {
         this.publishingStatusDao = publishingStatusDao;
@@ -30,20 +41,18 @@ public class SubmitBookForPublishingActivity {
      * Submits the book in the request for publishing.
      *
      * @param request Request object containing the book data to be published. If the request is updating an existing
-     *                book, then the corresponding book id should be provided. Otherwise, the request will be treated
-     *                as a new book.
-     *
-     * @return SubmitBookForPublishingResponse Response object that includes the publishing status id, which can be used
-     * to check the publishing state of the book.
+     * book, then the corresponding book id should be provided. Otherwise, the request will be treated as a new book.
+     * @return SubmitBookForPublishingResponse Response object that includes the publishing status id,
+     * which can be used to check the publishing state of the book.
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
-        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
         BookPublishingManager.addRequest(bookPublishRequest);
 
         if (StringUtils.isNotEmpty(request.getBookId())) {
-                catalogDao.isExsitingCatalogItem(request.getBookId())
-                        .orElseThrow(() -> new BookNotFoundException(
-                                String.format("could not find [%s] in CatalogItemsTable", request.getBookId())));
+            catalogDao.isExsitingCatalogItem(request.getBookId())
+                    .orElseThrow(() -> new BookNotFoundException(
+                            String.format("could not find [%s] in CatalogItemsTable", request.getBookId())));
         }
 
         String bookPublishRequestId = bookPublishRequest.getBookId();
@@ -61,39 +70,5 @@ public class SubmitBookForPublishingActivity {
                 .withPublishingRecordId(item.getPublishingRecordId())
                 .build();
     }
-
-
-
 }
 
-
-
-//
-//    BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
-//    String bookIdFromRequest = bookPublishRequest.getBookId();
-//    String requestBookId = request.getBookId();
-//    PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
-//            bookPublishRequest.getPublishingRecordId(),
-//            PublishingRecordStatus.QUEUED,
-//            bookIdFromRequest);
-//
-//        if (StringUtils.isNotBlank(requestBookId)) {
-//                // submit an existing book if the bookId doesn't throw exception
-//                CatalogItemVersion catalogItem = catalogDao.isExsitingCatalogItem(requestBookId)
-//                .orElseThrow(() -> new BookNotFoundException(
-//                String.format("could not find [%s] in CatalogItemsTable", requestBookId)));
-//
-//                Optional<PublishingStatusItem> optional = publishingStatusDao.queryItemsByBookId(catalogItem.getBookId());
-//                                                       return optional.map(statusItem -> SubmitBookForPublishingResponse.builder()
-//                                                       .withPublishingRecordId(statusItem.getPublishingRecordId())
-//                                                       .build())
-//                                                       .orElseGet(() -> SubmitBookForPublishingResponse.builder()
-//                                                       .withPublishingRecordId(item.getPublishingRecordId())
-//                                                       .build());
-//
-//                                                       }
-//
-//                                                       BookPublishingManager.addRequest(bookPublishRequest);
-//                                                       return SubmitBookForPublishingResponse.builder()
-//                                                       .withPublishingRecordId(item.getPublishingRecordId())
-//                                                       .build();

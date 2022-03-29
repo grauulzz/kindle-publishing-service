@@ -7,17 +7,16 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusIt
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
-import com.amazonaws.services.dynamodbv2.model.*;
-import java.util.HashMap;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import org.apache.commons.lang3.StringUtils;
 
 public class PublishingStatusDao {
     private static final String ADDITIONAL_NOTES_PREFIX = " Additional Notes: ";
@@ -162,32 +161,5 @@ public class PublishingStatusDao {
                 PublishingRecordStatus.SUCCESSFUL, requestBookId);
         save(failedItem);
     }
-
-
-    /**
-     * Query items by book id optional.
-     *
-     * @param bookId the book id
-     *
-     * @return the optional
-     */
-    public Optional<PublishingStatusItem> queryItemsByBookId(String bookId) {
-
-        HashMap<String, Condition> scanFilter = new HashMap<>();
-        scanFilter.put("publishingRecordId", new Condition()
-                .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(new AttributeValue().withS(bookId)));
-
-        DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
-                .withScanFilter(scanFilter);
-
-        PaginatedScanList<PublishingStatusItem> scanResult = db.scan(
-                PublishingStatusItem.class, scanExpression);
-
-        if (!scanResult.isEmpty()) {
-            return Optional.of(scanResult.get(0));
-        }
-        return Optional.empty();
-    }
-
 }
+

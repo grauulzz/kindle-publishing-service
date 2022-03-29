@@ -3,6 +3,7 @@ package com.amazon.ata.kindlepublishingservice.clients;
 import com.amazon.ata.recommendationsservice.RecommendationsService;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazon.ata.recommendationsservice.types.BookRecommendation;
+
 import java.util.List;
 import javax.inject.Inject;
 

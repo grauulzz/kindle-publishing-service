@@ -1,12 +1,14 @@
 package com.amazon.ata.kindlepublishingservice.publishing;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 
 /**
  * Class responsible for executing publishing tasks. The publisher is created in an off state. A call to start will
@@ -14,8 +16,6 @@ import org.apache.logging.log4j.Logger;
  */
 @Singleton
 public class BookPublisher {
-
-    private static final Logger log = LogManager.getLogger(BookPublisher.class);
 
     private final ScheduledExecutorService scheduledExecutorService;
     private final Runnable publishTask;
@@ -63,3 +63,4 @@ public class BookPublisher {
         return isRunning;
     }
 }
+

@@ -2,6 +2,7 @@ package com.amazon.ata.kindlepublishingservice.models.response;
 
 import com.amazon.ata.kindlepublishingservice.models.Book;
 import com.amazon.ata.kindlepublishingservice.models.BookRecommendation;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -80,8 +81,12 @@ public class GetBookResponse {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         GetBookResponse that = (GetBookResponse) o;
         return Objects.equals(book, that.book) &&
                        Objects.equals(recommendations, that.recommendations);
@@ -110,6 +115,7 @@ public class GetBookResponse {
          *
          * @return the builder
          */
+        //CHECKSTYLE:OFF:HiddenField
         public Builder withBook(Book book) {
             this.book = book;
             return this;
@@ -122,6 +128,7 @@ public class GetBookResponse {
          *
          * @return the builder
          */
+        //CHECKSTYLE:OFF:HiddenField
         public Builder withRecommendations(List<BookRecommendation> recommendations) {
             this.recommendations = recommendations;
             return this;

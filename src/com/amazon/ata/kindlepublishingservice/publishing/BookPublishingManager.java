@@ -5,7 +5,7 @@ import java.util.Queue;
 
 
 public class BookPublishingManager {
-    private static final Queue<BookPublishRequest> publishRequestQueue = new LinkedList<>();;
+    private static final Queue<BookPublishRequest> publishRequestQueue = new LinkedList<>();
 
     /**
      * Add request.
@@ -34,6 +34,7 @@ public class BookPublishingManager {
         return !publishRequestQueue.isEmpty();
     }
 }
+
 
 
 

@@ -87,7 +87,7 @@ public class KindleFormattedBook {
         /**
          * Builder constructor.
          */
-//CHECKSTYLE:OFF:HiddenField
+        //CHECKSTYLE:OFF:HiddenField
         public Builder() {
         }
 

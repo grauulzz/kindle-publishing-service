@@ -8,17 +8,18 @@ import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormatConverter;
 import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
+
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import org.springframework.scheduling.annotation.Async;
 
 public class CatalogDao {
 
@@ -121,9 +122,8 @@ public class CatalogDao {
      * @throws DynamoDBMappingException the dynamo db mapping exception
      * @throws BookNotFoundException    the book not found exception
      */
-
-    public <U> CompletableFuture<CatalogItemVersion> load(String id) throws DynamoDBMappingException, BookNotFoundException {
-
+    public <U> CompletableFuture<CatalogItemVersion> load(String id)
+            throws DynamoDBMappingException, BookNotFoundException {
         CatalogItemVersion item = db.load(CatalogItemVersion.class, id);
         if (item == null) {
             throw new BookNotFoundException("Book not found on load from db");

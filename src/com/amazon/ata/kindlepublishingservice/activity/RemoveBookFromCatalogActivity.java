@@ -5,7 +5,9 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.RemoveBookFromCatalogResponse;
+
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
+
 import javax.inject.Inject;
 
 /**

@@ -1,6 +1,7 @@
 package com.amazon.ata.kindlepublishingservice.publishing;
 
 import com.amazon.ata.recommendationsservice.types.BookGenre;
+
 import java.util.Objects;
 
 /**
@@ -87,6 +88,38 @@ public final class BookPublishRequest {
         return genre;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        BookPublishRequest request = (BookPublishRequest) o;
+        return getPublishingRecordId().equals(request.getPublishingRecordId()) &&
+                       getBookId().equals(request.getBookId()) && getTitle().equals(request.getTitle()) &&
+                       getAuthor().equals(request.getAuthor()) && getText().equals(request.getText()) &&
+                       getGenre() == request.getGenre();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getPublishingRecordId(), getBookId(), getTitle(), getAuthor(), getText(), getGenre());
+    }
+
+    @Override
+    public String toString() {
+        return "BookPublishRequest{" +
+                       "publishingRecordId='" + publishingRecordId + '\'' +
+                       ", bookId='" + bookId + '\'' +
+                       ", title='" + title + '\'' +
+                       ", author='" + author + '\'' +
+                       ", text='" + text + '\'' +
+                       ", genre=" + genre +
+                       '}';
+    }
+
     /**
      * BookPublishRequest builder static inner class.
      */
@@ -101,7 +134,7 @@ public final class BookPublishRequest {
         /**
          * Builder constructor.
          */
-//CHECKSTYLE:OFF:HiddenField
+        //CHECKSTYLE:OFF:HiddenField
         public Builder() {
         }
 
@@ -192,29 +225,5 @@ public final class BookPublishRequest {
             return new BookPublishRequest(this);
         }
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BookPublishRequest request = (BookPublishRequest) o;
-        return getPublishingRecordId().equals(request.getPublishingRecordId()) && getBookId().equals(request.getBookId()) && getTitle().equals(request.getTitle()) && getAuthor().equals(request.getAuthor()) && getText().equals(request.getText()) && getGenre() == request.getGenre();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getPublishingRecordId(), getBookId(), getTitle(), getAuthor(), getText(), getGenre());
-    }
-
-    @Override
-    public String toString() {
-        return "BookPublishRequest{" +
-                       "publishingRecordId='" + publishingRecordId + '\'' +
-                       ", bookId='" + bookId + '\'' +
-                       ", title='" + title + '\'' +
-                       ", author='" + author + '\'' +
-                       ", text='" + text + '\'' +
-                       ", genre=" + genre +
-                       '}';
-    }
 }
+

@@ -1,8 +1,12 @@
 package com.amazon.ata.kindlepublishingservice.dynamodb.models;
 
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
-import java.util.Objects;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConvertedEnum;
 
 @DynamoDBTable(tableName = "PublishingStatus")
 public class PublishingStatusItem {

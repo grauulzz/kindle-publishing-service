@@ -1,6 +1,7 @@
 package com.amazon.ata.kindlepublishingservice.models.requests;
 
 import com.amazon.ata.kindlepublishingservice.models.Book;
+
 import java.util.Objects;
 
 
@@ -145,10 +146,18 @@ public class SubmitBookForPublishingRequest {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SubmitBookForPublishingRequest request = (SubmitBookForPublishingRequest) o;
-        return getBookId().equals(request.getBookId()) && getTitle().equals(request.getTitle()) && getAuthor().equals(request.getAuthor()) && getText().equals(request.getText()) && getGenre().equals(request.getGenre());
+        return getBookId().equals(request.getBookId()) &&
+                       getTitle().equals(request.getTitle()) &&
+                       getAuthor().equals(request.getAuthor()) &&
+                       getText().equals(request.getText()) &&
+                       getGenre().equals(request.getGenre());
     }
 
     @Override

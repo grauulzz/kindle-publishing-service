@@ -55,8 +55,12 @@ public class SubmitBookForPublishingResponse {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SubmitBookForPublishingResponse that = (SubmitBookForPublishingResponse) o;
         return Objects.equals(publishingRecordId, that.publishingRecordId);
     }

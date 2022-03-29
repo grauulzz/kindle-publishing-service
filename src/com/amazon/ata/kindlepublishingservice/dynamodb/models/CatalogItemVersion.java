@@ -1,7 +1,13 @@
 package com.amazon.ata.kindlepublishingservice.dynamodb.models;
 
 import com.amazon.ata.recommendationsservice.types.BookGenre;
-import com.amazonaws.services.dynamodbv2.datamodeling.*;
+
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConvertedEnum;
+
 import java.util.Objects;
 
 @DynamoDBTable(tableName = "CatalogItemVersions")

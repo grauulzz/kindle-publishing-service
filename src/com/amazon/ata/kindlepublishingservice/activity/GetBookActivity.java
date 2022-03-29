@@ -9,6 +9,7 @@ import com.amazon.ata.kindlepublishingservice.models.requests.GetBookRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.GetBookResponse;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazon.ata.recommendationsservice.types.BookRecommendation;
+
 import java.util.List;
 import javax.inject.Inject;
 

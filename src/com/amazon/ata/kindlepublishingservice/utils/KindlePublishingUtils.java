@@ -1,7 +1,9 @@
 package com.amazon.ata.kindlepublishingservice.utils;
 
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
+
 import com.google.common.collect.ImmutableMap;
+
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.UUID;

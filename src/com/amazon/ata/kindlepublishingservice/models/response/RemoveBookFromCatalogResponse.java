@@ -2,8 +2,10 @@ package com.amazon.ata.kindlepublishingservice.models.response;
 
 
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
+
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
+
 import java.util.Objects;
 
 /**
@@ -64,16 +66,22 @@ public class RemoveBookFromCatalogResponse {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         RemoveBookFromCatalogResponse response = (RemoveBookFromCatalogResponse) o;
-        return Objects.equals(getItem(), response.getItem()) && Objects.equals(getScanRequest(), response.getScanRequest()) && Objects.equals(getScanResult(), response.getScanResult());
+        return Objects.equals(getItem(), response.getItem()) &&
+                       Objects.equals(getScanRequest(), response.getScanRequest()) &&
+                       Objects.equals(getScanResult(), response.getScanResult());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(getItem(), getScanRequest(), getScanResult());
     }
-
 }
+
 

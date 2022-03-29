@@ -7,11 +7,20 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import dagger.Module;
 import dagger.Provides;
+
 import javax.inject.Singleton;
 
+/**
+ * The type Data access module.
+ */
 @Module
 public class DataAccessModule {
 
+    /**
+     * Provide dynamo db mapper dynamo db mapper.
+     *
+     * @return the dynamo db mapper
+     */
     @Singleton
     @Provides
     public DynamoDBMapper provideDynamoDBMapper() {

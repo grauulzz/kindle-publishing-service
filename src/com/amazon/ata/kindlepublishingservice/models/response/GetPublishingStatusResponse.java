@@ -1,6 +1,7 @@
 package com.amazon.ata.kindlepublishingservice.models.response;
 
 import com.amazon.ata.kindlepublishingservice.models.PublishingStatusRecord;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,8 +72,12 @@ public class GetPublishingStatusResponse {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         GetPublishingStatusResponse that = (GetPublishingStatusResponse) o;
         return Objects.equals(publishingStatusHistory, that.publishingStatusHistory);
     }
@@ -115,6 +120,7 @@ public class GetPublishingStatusResponse {
          *
          * @return the builder
          */
+        //CHECKSTYLE:OFF:HiddenField
         public Builder withPublishingRecordsMap(Map<String, List<PublishingStatusRecord>> publishingRecords) {
             this.publishingRecords = publishingRecords;
             return this;
