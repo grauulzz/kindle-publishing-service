@@ -45,10 +45,6 @@ public class PublishingStatusDao {
     public PublishingStatusItem setPublishingStatus(String publishingRecordId,
                                                     PublishingRecordStatus publishingRecordStatus,
                                                     String bookId) {
-        PublishingStatusItem item = new PublishingStatusItem();
-        item.setPublishingRecordId(publishingRecordId);
-        item.setStatus(publishingRecordStatus);
-        item.setBookId(bookId);
         return setPublishingStatus(publishingRecordId,
                 publishingRecordStatus, bookId, null);
     }

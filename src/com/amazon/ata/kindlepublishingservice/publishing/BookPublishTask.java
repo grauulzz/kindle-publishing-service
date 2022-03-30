@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
+import org.junit.platform.commons.util.StringUtils;
 
 import static com.amazon.ata.kindlepublishingservice.App.component;
 
@@ -54,7 +55,7 @@ public class BookPublishTask implements Runnable {
 
             publishingStatusDao.markInProgress(request, requestBookId);
 
-            if (requestBookId != null) {
+            if (!StringUtils.isBlank(requestBookId)) {
                 CompletableFuture<CatalogItemVersion> getBookFromCatalog =
                         CompletableFuture.supplyAsync(() -> catalogDao.getBookFromCatalog(requestBookId));
                 try {
@@ -75,7 +76,7 @@ public class BookPublishTask implements Runnable {
 
             try {
                 CompletableFuture.supplyAsync(() -> catalogDao.load(bookId))
-                        .thenCompose(item -> {
+                        .thenAccept(item -> {
                             try {
                                 item.get().setVersion(1);
                                 catalogDao.saveItem(item.get());

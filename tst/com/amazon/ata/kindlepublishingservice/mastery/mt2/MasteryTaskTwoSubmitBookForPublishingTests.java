@@ -67,7 +67,8 @@ public class MasteryTaskTwoSubmitBookForPublishingTests extends IntegrationTestB
             .build();
 
         // WHEN
-        SubmitBookForPublishingResponse response = COMPONENT.provideSubmitBookForPublishingActivity().execute(submitBookForPublishingRequest);
+        SubmitBookForPublishingResponse response = COMPONENT.provideSubmitBookForPublishingActivity()
+                .execute(submitBookForPublishingRequest);
 
         // THEN
         PublishingStatusItem key = new PublishingStatusItem();
@@ -97,9 +98,10 @@ public class MasteryTaskTwoSubmitBookForPublishingTests extends IntegrationTestB
             .build();
 
         // WHEN
-        SubmitBookForPublishingResponse response = COMPONENT.provideSubmitBookForPublishingActivity().execute(submitBookForPublishingRequest);
+        SubmitBookForPublishingResponse response = COMPONENT.provideSubmitBookForPublishingActivity()
+                .execute(submitBookForPublishingRequest);
 
-      // THEN
+        // THEN
         PublishingStatusItem key = new PublishingStatusItem();
         key.setPublishingRecordId(response.getPublishingRecordId());
         key.setStatus(PublishingRecordStatus.QUEUED);

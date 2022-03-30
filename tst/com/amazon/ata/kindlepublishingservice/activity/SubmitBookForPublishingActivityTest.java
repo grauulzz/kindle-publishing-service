@@ -2,6 +2,7 @@ package com.amazon.ata.kindlepublishingservice.activity;
 
 import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
+import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
@@ -12,10 +13,11 @@ import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
+import org.mockito.session.MockitoSessionBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,14 +37,20 @@ public class SubmitBookForPublishingActivityTest {
     private PublishingStatusDao publishingStatusDao;
 
     @Mock
-    private CatalogDao catalogDao;
+    App app;
+
+    @Mock
+    CatalogDao catalogDao;
+
+    @Mock
+    BookPublishingManager bookPublishingManager;
 
     @InjectMocks
     private SubmitBookForPublishingActivity activity;
 
     @BeforeEach
     public void setup() {
-        initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
