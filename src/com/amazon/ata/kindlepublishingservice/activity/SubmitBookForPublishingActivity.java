@@ -4,6 +4,7 @@ package com.amazon.ata.kindlepublishingservice.activity;
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
@@ -50,9 +51,26 @@ public class SubmitBookForPublishingActivity {
         BookPublishingManager.addRequest(bookPublishRequest);
 
         if (StringUtils.isNotEmpty(request.getBookId())) {
-            catalogDao.isExsitingCatalogItem(request.getBookId())
-                    .orElseThrow(() -> new BookNotFoundException(
-                            String.format("could not find [%s] in CatalogItemsTable", request.getBookId())));
+            CatalogItemVersion item = catalogDao.getBookFromCatalog(request.getBookId());
+
+            if (item == null) {
+                throw new BookNotFoundException("book not found");
+            }
+
+            String bookId = request.getBookId();
+            PublishingStatusItem publishingRecordId = publishingStatusDao
+                    .queryItemsByBookId(bookPublishRequest.getPublishingRecordId(), bookId);
+
+            PublishingStatusItem publishingStatusItem = publishingStatusDao.setPublishingStatus(
+                    publishingRecordId.getPublishingRecordId(),
+                    PublishingRecordStatus.QUEUED,
+                    bookId);
+
+            publishingStatusDao.save(publishingStatusItem);
+
+            return SubmitBookForPublishingResponse.builder()
+                    .withPublishingRecordId(publishingStatusItem.getPublishingRecordId())
+                    .build();
         }
 
         String bookPublishRequestId = bookPublishRequest.getBookId();

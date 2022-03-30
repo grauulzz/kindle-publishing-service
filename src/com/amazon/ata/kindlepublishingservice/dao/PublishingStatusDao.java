@@ -10,8 +10,13 @@ import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
+import com.amazonaws.services.dynamodbv2.model.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -109,6 +114,32 @@ public class PublishingStatusDao {
             }
             throw e;
         }
+    }
+
+    /**
+     * Query items by book id optional.
+     *
+     * @param bookId the book id
+     *
+     * @return the optional
+     */
+    public PublishingStatusItem queryItemsByBookId(String bookId, String publishingRecord) {
+        PublishingStatusItem item = new PublishingStatusItem();
+        item.setBookId(bookId);
+        item.setPublishingRecordId(publishingRecord);
+        DynamoDBQueryExpression<PublishingStatusItem> queryExpression =
+                new DynamoDBQueryExpression<PublishingStatusItem>()
+                .withHashKeyValues(item)
+                .withScanIndexForward(false)
+                .withLimit(1);
+
+        List<PublishingStatusItem> results = db.query(PublishingStatusItem.class,
+                queryExpression);
+
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.get(0);
     }
 
     /**

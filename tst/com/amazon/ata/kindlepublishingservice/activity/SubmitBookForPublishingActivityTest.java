@@ -1,6 +1,7 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
 import com.amazon.ata.kindlepublishingservice.App;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
@@ -53,6 +54,9 @@ public class SubmitBookForPublishingActivityTest {
 
         PublishingStatusItem item = new PublishingStatusItem();
         item.setPublishingRecordId("publishing.123");
+        item.setBookId(request.getBookId());
+        publishingStatusDao.save(item);
+
         // KindlePublishingUtils generates a random publishing status ID for us
         when(publishingStatusDao.setPublishingStatus(anyString(),
                 eq(PublishingRecordStatus.QUEUED),
