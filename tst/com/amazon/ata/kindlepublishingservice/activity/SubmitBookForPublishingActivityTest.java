@@ -34,6 +34,9 @@ public class SubmitBookForPublishingActivityTest {
     @Mock
     private PublishingStatusDao publishingStatusDao;
 
+    @Mock
+    private CatalogDao catalogDao;
+
     @InjectMocks
     private SubmitBookForPublishingActivity activity;
 
@@ -52,18 +55,16 @@ public class SubmitBookForPublishingActivityTest {
                 .withGenre(BookGenre.FANTASY.name())
                 .build();
 
+
         PublishingStatusItem item = new PublishingStatusItem();
         item.setPublishingRecordId("publishing.123");
-        item.setBookId(request.getBookId());
-        publishingStatusDao.save(item);
-
         // KindlePublishingUtils generates a random publishing status ID for us
         when(publishingStatusDao.setPublishingStatus(anyString(),
                 eq(PublishingRecordStatus.QUEUED),
                 eq(request.getBookId()))).thenReturn(item);
 
         // WHEN
-        SubmitBookForPublishingResponse response = App.component.provideSubmitBookForPublishingActivity().execute(request);
+        SubmitBookForPublishingResponse response = activity.execute(request);
 
         // THEN
         assertEquals("publishing.123", response.getPublishingRecordId(), "Expected response to return a publishing" +

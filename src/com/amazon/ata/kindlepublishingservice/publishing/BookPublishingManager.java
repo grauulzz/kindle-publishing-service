@@ -2,17 +2,22 @@ package com.amazon.ata.kindlepublishingservice.publishing;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import javax.inject.Inject;
 
 
 public class BookPublishingManager {
-    private static final Queue<BookPublishRequest> publishRequestQueue = new LinkedList<>();
+    private final Queue<BookPublishRequest> publishRequestQueue = new LinkedList<>();
+
+    @Inject
+    public BookPublishingManager() {
+    }
 
     /**
      * Add request.
      *
      * @param request the request
      */
-    public static void addRequest(BookPublishRequest request) {
+    public void addRequest(BookPublishRequest request) {
         publishRequestQueue.add(request);
     }
 
@@ -21,7 +26,7 @@ public class BookPublishingManager {
      *
      * @return the book publish request
      */
-    static BookPublishRequest nextRequest() {
+    BookPublishRequest nextRequest() {
         return publishRequestQueue.remove();
     }
 
@@ -30,7 +35,7 @@ public class BookPublishingManager {
      *
      * @return the boolean
      */
-    static boolean queueHasNextRequest() {
+    boolean queueHasNextRequest() {
         return !publishRequestQueue.isEmpty();
     }
 }

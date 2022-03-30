@@ -1,10 +1,10 @@
 package com.amazon.ata.kindlepublishingservice.activity;
 
 
+import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
@@ -12,8 +12,6 @@ import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPubli
 import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPublishingResponse;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
-
-import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 
@@ -25,6 +23,7 @@ public class SubmitBookForPublishingActivity {
 
     private final PublishingStatusDao publishingStatusDao;
     private final CatalogDao catalogDao;
+    private final BookPublishingManager manager;
 
     /**
      * Instantiates a new Submit book for publishing activity.
@@ -33,9 +32,11 @@ public class SubmitBookForPublishingActivity {
      * @param publishingStatusDao the publishing status dao
      */
     @Inject
-    public SubmitBookForPublishingActivity(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao) {
+    public SubmitBookForPublishingActivity(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao,
+                                           BookPublishingManager manager) {
         this.publishingStatusDao = publishingStatusDao;
         this.catalogDao = catalogDao;
+        this.manager = manager;
     }
 
     /**
@@ -48,25 +49,18 @@ public class SubmitBookForPublishingActivity {
      */
     public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) {
         BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
-        BookPublishingManager.addRequest(bookPublishRequest);
+        manager.addRequest(bookPublishRequest);
 
-        if (StringUtils.isNotEmpty(request.getBookId())) {
-            CatalogItemVersion item = catalogDao.getBookFromCatalog(request.getBookId());
-
-            if (item == null) {
-                throw new BookNotFoundException("book not found");
-            }
-
-            String bookId = request.getBookId();
-            PublishingStatusItem publishingRecordId = publishingStatusDao
-                    .queryItemsByBookId(bookPublishRequest.getPublishingRecordId(), bookId);
+        if (request.getBookId() != null) {
+            String id = request.getBookId();
+            catalogDao.isExsitingCatalogItem(id)
+                    .orElseThrow(() -> new BookNotFoundException(
+                            String.format("could not find [%s] in CatalogItemsTable", id)));
 
             PublishingStatusItem publishingStatusItem = publishingStatusDao.setPublishingStatus(
-                    publishingRecordId.getPublishingRecordId(),
+                    bookPublishRequest.getPublishingRecordId(),
                     PublishingRecordStatus.QUEUED,
-                    bookId);
-
-            publishingStatusDao.save(publishingStatusItem);
+                    id);
 
             return SubmitBookForPublishingResponse.builder()
                     .withPublishingRecordId(publishingStatusItem.getPublishingRecordId())
@@ -81,8 +75,6 @@ public class SubmitBookForPublishingActivity {
                 publishingRecordId,
                 PublishingRecordStatus.QUEUED,
                 bookPublishRequestId);
-
-        publishingStatusDao.save(item);
 
         return SubmitBookForPublishingResponse.builder()
                 .withPublishingRecordId(item.getPublishingRecordId())

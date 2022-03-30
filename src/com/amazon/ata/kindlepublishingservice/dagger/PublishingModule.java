@@ -17,7 +17,7 @@ import javax.inject.Singleton;
 public class PublishingModule {
 
     /**
-     * Provide book publisher book publisher.
+     * Provide book publisher.
      *
      * @param scheduledExecutorService the scheduled executor service
      * @param bookPublishTask          the book publish task

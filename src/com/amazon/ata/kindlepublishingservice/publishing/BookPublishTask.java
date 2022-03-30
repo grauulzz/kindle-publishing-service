@@ -26,6 +26,7 @@ public class BookPublishTask implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(BookPublisher.class);
     private final CatalogDao catalogDao;
     private final PublishingStatusDao publishingStatusDao;
+    private final BookPublishingManager manager;
 
     /**
      * Instantiates a new Book publish task.
@@ -34,16 +35,17 @@ public class BookPublishTask implements Runnable {
      * @param publishingStatusDao the publishing status dao
      */
     @Inject
-    public BookPublishTask(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao) {
+    public BookPublishTask(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao, BookPublishingManager manager) {
         this.catalogDao = catalogDao;
         this.publishingStatusDao = publishingStatusDao;
+        this.manager = manager;
     }
 
     @Override
     public void run() {
         LOGGER.info("Book publish task");
-        while (BookPublishingManager.queueHasNextRequest()) {
-            BookPublishRequest request = BookPublishingManager.nextRequest();
+        while (manager.queueHasNextRequest()) {
+            BookPublishRequest request = manager.nextRequest();
             if (request == null) {
                 return;
             }

@@ -21,7 +21,8 @@ class NoOpTaskTest {
     @Test
     void run_completesSuccessfully() {
         // GIVEN
-        BookPublishingManager.addRequest(request);
+        BookPublishingManager manager = new BookPublishingManager();
+        manager.addRequest(request);
 
         BookPublishTask task = App.component.provideBookPublishTask();
         SubmitBookForPublishingResponse response = App.component.provideSubmitBookForPublishingActivity()

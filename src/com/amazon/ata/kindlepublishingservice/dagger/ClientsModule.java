@@ -6,6 +6,7 @@ import com.amazon.ata.kindlepublishingservice.clients.RecommendationsServiceClie
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishTask;
+import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
 import com.amazon.ata.recommendationsservice.RecommendationsService;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
@@ -67,13 +68,14 @@ public class ClientsModule {
      * @param catalogDao          the catalog dao
      * @param publishingStatusDao the publishing status dao
      *
-     * @return the submit book for publishing activity
+     * @return submit book for publishing activity
      */
     @Singleton
     @Provides
     public SubmitBookForPublishingActivity provideSubmitBookForPublishingActivity(
-            CatalogDao catalogDao, PublishingStatusDao publishingStatusDao) {
-        return new SubmitBookForPublishingActivity(catalogDao, publishingStatusDao);
+            CatalogDao catalogDao, PublishingStatusDao publishingStatusDao, BookPublishingManager manager) {
+        return new SubmitBookForPublishingActivity(catalogDao, publishingStatusDao,
+                manager);
     }
 
     /**
@@ -86,8 +88,20 @@ public class ClientsModule {
      */
     @Singleton
     @Provides
-    public BookPublishTask provideBookPublishTask(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao) {
-        return new BookPublishTask(catalogDao, publishingStatusDao);
+    public BookPublishTask provideBookPublishTask(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao,
+                                                  BookPublishingManager manager) {
+        return new BookPublishTask(catalogDao, publishingStatusDao, manager);
+    }
+
+    /**
+     * Provide book publishing manager book publishing manager.
+     *
+     * @return the book publishing manager
+     */
+    @Singleton
+    @Provides
+    public BookPublishingManager provideBookPublishingManager() {
+        return new BookPublishingManager();
     }
 
 }
