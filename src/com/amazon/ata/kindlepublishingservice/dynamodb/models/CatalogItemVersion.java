@@ -87,14 +87,14 @@ public class CatalogItemVersion {
     @Override
     public String toString() {
         return "CatalogItemVersion{" +
-                "bookId='" + bookId + '\'' +
-                ", version=" + version +
-                ", inactive=" + inactive +
-                ", title='" + title + '\'' +
-                ", author='" + author + '\'' +
-                ", text='" + text + '\'' +
-                ", genre=" + genre +
-                '}';
+                       "bookId='" + bookId + '\'' +
+                       ", version=" + version +
+                       ", inactive=" + inactive +
+                       ", title='" + title + '\'' +
+                       ", author='" + author + '\'' +
+                       ", text='" + text + '\'' +
+                       ", genre=" + genre +
+                       '}';
     }
 
     @Override
@@ -107,12 +107,12 @@ public class CatalogItemVersion {
         }
         CatalogItemVersion that = (CatalogItemVersion) o;
         return getVersion() == that.getVersion() &&
-                isInactive() == that.isInactive() &&
-                Objects.equals(getBookId(), that.getBookId()) &&
-                Objects.equals(getTitle(), that.getTitle()) &&
-                Objects.equals(getAuthor(), that.getAuthor()) &&
-                Objects.equals(getText(), that.getText()) &&
-                getGenre() == that.getGenre();
+                       isInactive() == that.isInactive() &&
+                       Objects.equals(getBookId(), that.getBookId()) &&
+                       Objects.equals(getTitle(), that.getTitle()) &&
+                       Objects.equals(getAuthor(), that.getAuthor()) &&
+                       Objects.equals(getText(), that.getText()) &&
+                       getGenre() == that.getGenre();
     }
 
     @Override

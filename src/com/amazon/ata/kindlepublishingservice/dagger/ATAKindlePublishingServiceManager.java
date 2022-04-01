@@ -21,6 +21,7 @@ public class ATAKindlePublishingServiceManager {
 
     /**
      * Construct a ATAKindlePublishingServiceManager.
+     *
      * @param bookPublisher handles asynchronous publishing of books
      */
     @Inject
@@ -28,16 +29,34 @@ public class ATAKindlePublishingServiceManager {
         this.bookPublisher = bookPublisher;
     }
 
+    /**
+     * Initialize.
+     */
     public void initialize() {
     }
 
+    /**
+     * Verify.
+     *
+     * @throws Exception the exception
+     */
     public void verify() throws Exception {
     }
 
+    /**
+     * Start.
+     *
+     * @throws Exception the exception
+     */
     public void start() throws Exception {
         bookPublisher.start();
     }
 
+    /**
+     * Stop.
+     *
+     * @throws Exception the exception
+     */
     public void stop() throws Exception {
         bookPublisher.stop();
     }

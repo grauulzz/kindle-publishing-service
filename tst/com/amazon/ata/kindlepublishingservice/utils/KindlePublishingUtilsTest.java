@@ -2,6 +2,7 @@ package com.amazon.ata.kindlepublishingservice.utils;
 
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 
+import com.amazon.ata.kindlepublishingservice.publishing.utils.KindlePublishingUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;

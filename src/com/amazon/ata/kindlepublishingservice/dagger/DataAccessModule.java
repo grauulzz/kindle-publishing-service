@@ -10,16 +10,24 @@ import dagger.Provides;
 
 import javax.inject.Singleton;
 
+/**
+ * The type Data access module.
+ */
 @Module
 public class DataAccessModule {
 
+    /**
+     * Provide dynamo db mapper dynamo db mapper.
+     *
+     * @return the dynamo db mapper
+     */
     @Singleton
     @Provides
     public DynamoDBMapper provideDynamoDBMapper() {
         AmazonDynamoDB amazonDynamoDBClient = AmazonDynamoDBClientBuilder.standard()
-            .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
-            .withRegion(Regions.US_WEST_2)
-            .build();
+                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
+                .withRegion(Regions.US_WEST_2)
+                .build();
 
         return new DynamoDBMapper(amazonDynamoDBClient);
     }

@@ -8,6 +8,12 @@ import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-public class CatalogDaoTest {
+class CatalogDaoTest {
 
     @Mock
     private PaginatedQueryList<CatalogItemVersion> list;
@@ -36,13 +42,23 @@ public class CatalogDaoTest {
     @InjectMocks
     private CatalogDao catalogDao;
 
+    Map<String, AttributeValue> attr = new HashMap<>();
+
+
     @BeforeEach
-    public void setup(){
+    void setup(){
         initMocks(this);
+        attr.put("bookId", new AttributeValue().withS("book.ac510a76-008c-4478-b9f3-c277d74fa305"));
+        attr.put("version", new AttributeValue().withN("1"));
+        attr.put("inactive", new AttributeValue().withBOOL(true));
+//        attr.put("title", new AttributeValue().withS("title"));
+//        attr.put("author", new AttributeValue().withS("author"));
+//        attr.put("text", new AttributeValue().withS(  "cool-book-text"));
+//        attr.put("genre", new AttributeValue().withS(String.valueOf(BookGenre.HORROR)));
     }
 
     @Test
-    public void getBookFromCatalog_bookDoesNotExist_throwsException() {
+    void getBookFromCatalog_bookDoesNotExist_throwsException() {
         // GIVEN
         String invalidBookId = "notABookID";
         when(dynamoDbMapper.query(eq(CatalogItemVersion.class), any(DynamoDBQueryExpression.class))).thenReturn(list);
@@ -54,7 +70,7 @@ public class CatalogDaoTest {
     }
 
     @Test
-    public void getBookFromCatalog_bookInactive_throwsException() {
+    void getBookFromCatalog_bookInactive_throwsException() {
         // GIVEN
         String bookId = "book.123";
         CatalogItemVersion item = new CatalogItemVersion();
@@ -72,7 +88,7 @@ public class CatalogDaoTest {
     }
 
     @Test
-    public void getBookFromCatalog_oneVersion_returnVersion1() {
+    void getBookFromCatalog_oneVersion_returnVersion1() {
         // GIVEN
         String bookId = "book.123";
         CatalogItemVersion item = new CatalogItemVersion();
@@ -100,7 +116,7 @@ public class CatalogDaoTest {
     }
 
     @Test
-    public void getBookFromCatalog_twoVersions_returnsVersion2() {
+    void getBookFromCatalog_twoVersions_returnsVersion2() {
         // GIVEN
         String bookId = "book.123";
         CatalogItemVersion item = new CatalogItemVersion();

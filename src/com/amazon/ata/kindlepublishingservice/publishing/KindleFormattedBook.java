@@ -6,11 +6,11 @@ import com.amazon.ata.recommendationsservice.types.BookGenre;
  * Kindle formatted book POJO - fields have been formatted for the kindle.
  */
 public class KindleFormattedBook {
-    private String bookId;
-    private String title;
-    private String author;
-    private String text;
-    private BookGenre genre;
+    private final String bookId;
+    private final String title;
+    private final String author;
+    private final String text;
+    private final BookGenre genre;
 
     private KindleFormattedBook(KindleFormattedBook.Builder builder) {
         this.bookId = builder.bookId;
@@ -20,32 +20,58 @@ public class KindleFormattedBook {
         this.genre = builder.genre;
     }
 
-    public String getBookId() {
-        return bookId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public BookGenre getGenre() {
-        return genre;
-    }
-
     /**
      * Creates a builder object to aid in KindleFormattedBook object creation.
+     *
      * @return the builder to create KindleFormattedBook objects
      */
     public static KindleFormattedBook.Builder builder() {
         return new KindleFormattedBook.Builder();
+    }
+
+    /**
+     * Gets book id.
+     *
+     * @return the book id
+     */
+    public String getBookId() {
+        return bookId;
+    }
+
+    /**
+     * Gets title.
+     *
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Gets author.
+     *
+     * @return the author
+     */
+    public String getAuthor() {
+        return author;
+    }
+
+    /**
+     * Gets text.
+     *
+     * @return the text
+     */
+    public String getText() {
+        return text;
+    }
+
+    /**
+     * Gets genre.
+     *
+     * @return the genre
+     */
+    public BookGenre getGenre() {
+        return genre;
     }
 
     /**
@@ -66,10 +92,11 @@ public class KindleFormattedBook {
         }
 
         /**
-         *  Sets the bookId and returns a reference to this Builder to the methods can be chained
-         *  together.
+         * Sets the bookId and returns a reference to this Builder to the methods can be chained
+         * together.
          *
          * @param bookId The book id to set.
+         *
          * @return a reference to this Builder.
          */
         public KindleFormattedBook.Builder withBookId(String bookId) {
@@ -78,10 +105,11 @@ public class KindleFormattedBook {
         }
 
         /**
-         *  Sets the title and returns a reference to this Builder to the methods can be chained
-         *  together.
+         * Sets the title and returns a reference to this Builder to the methods can be chained
+         * together.
          *
          * @param title The title to set.
+         *
          * @return a reference to this Builder.
          */
         public KindleFormattedBook.Builder withTitle(String title) {
@@ -90,10 +118,11 @@ public class KindleFormattedBook {
         }
 
         /**
-         *  Sets the author and returns a reference to this Builder to the methods can be chained
-         *  together.
+         * Sets the author and returns a reference to this Builder to the methods can be chained
+         * together.
          *
          * @param author The author to set.
+         *
          * @return a reference to this Builder.
          */
         public KindleFormattedBook.Builder withAuthor(String author) {
@@ -102,10 +131,11 @@ public class KindleFormattedBook {
         }
 
         /**
-         *  Sets the text and returns a reference to this Builder to the methods can be chained
-         *  together.
+         * Sets the text and returns a reference to this Builder to the methods can be chained
+         * together.
          *
          * @param text The text to set.
+         *
          * @return a reference to this Builder.
          */
         public KindleFormattedBook.Builder withText(String text) {
@@ -114,10 +144,11 @@ public class KindleFormattedBook {
         }
 
         /**
-         *  Sets the genre and returns a reference to this Builder to the methods can be chained
-         *  together.
+         * Sets the genre and returns a reference to this Builder to the methods can be chained
+         * together.
          *
          * @param genre The genre to set.
+         *
          * @return a reference to this Builder.
          */
         public KindleFormattedBook.Builder withGenre(BookGenre genre) {
@@ -126,7 +157,7 @@ public class KindleFormattedBook {
         }
 
         /**
-         *  Returns a KindleFormattedBook built from the parameters previously set.
+         * Returns a KindleFormattedBook built from the parameters previously set.
          *
          * @return a KindleFormattedBook with parameters of this Builder.
          */
