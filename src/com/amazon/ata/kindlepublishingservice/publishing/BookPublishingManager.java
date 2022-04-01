@@ -8,6 +8,9 @@ import javax.inject.Inject;
 public class BookPublishingManager {
     private final Queue<BookPublishRequest> publishRequestQueue = new LinkedList<>();
 
+    /**
+     * Instantiates a new Book publishing manager.
+     */
     @Inject
     public BookPublishingManager() {
     }

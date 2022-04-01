@@ -6,7 +6,7 @@ import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
-import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.amazon.ata.kindlepublishingservice.publishing.utils.KindlePublishingUtils;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;

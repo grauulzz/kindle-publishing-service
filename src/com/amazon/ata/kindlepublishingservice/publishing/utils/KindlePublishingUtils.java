@@ -1,4 +1,4 @@
-package com.amazon.ata.kindlepublishingservice.utils;
+package com.amazon.ata.kindlepublishingservice.publishing.utils;
 
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 

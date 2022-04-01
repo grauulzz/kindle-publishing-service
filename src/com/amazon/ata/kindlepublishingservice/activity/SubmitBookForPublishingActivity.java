@@ -5,7 +5,6 @@ import com.amazon.ata.kindlepublishingservice.App;
 import com.amazon.ata.kindlepublishingservice.converters.BookPublishRequestConverter;
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
-import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
@@ -13,8 +12,10 @@ import com.amazon.ata.kindlepublishingservice.models.response.SubmitBookForPubli
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
 
-import javax.inject.Inject;
 import org.junit.platform.commons.util.StringUtils;
+
+import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Inject;
 
 
 /**
@@ -31,6 +32,7 @@ public class SubmitBookForPublishingActivity {
      *
      * @param catalogDao          the catalog dao
      * @param publishingStatusDao the publishing status dao
+     * @param manager             the manager
      */
     @Inject
     public SubmitBookForPublishingActivity(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao,
@@ -48,36 +50,40 @@ public class SubmitBookForPublishingActivity {
      * @return SubmitBookForPublishingResponse Response object that includes the publishing status id,
      * which can be used to check the publishing state of the book.
      */
-    public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request) throws BookNotFoundException {
-        BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
+    public SubmitBookForPublishingResponse execute(SubmitBookForPublishingRequest request)
+            throws BookNotFoundException {
 
-        if (catalogDao.isExsitingCatalogItem(request.getBookId()).isPresent()) {
-            String id = request.getBookId();
-            PublishingStatusItem publishingStatusItem = publishingStatusDao.setPublishingStatus(
-                    bookPublishRequest.getPublishingRecordId(),
-                    PublishingRecordStatus.QUEUED,
-                    id);
-
-            manager.addRequest(bookPublishRequest);
-
-            return SubmitBookForPublishingResponse.builder()
-                    .withPublishingRecordId(publishingStatusItem.getPublishingRecordId())
-                    .build();
-        }
-
-        String bookPublishRequestId = bookPublishRequest.getBookId();
-        String publishingRecordId = bookPublishRequest.getPublishingRecordId();
-
-        PublishingStatusItem item = publishingStatusDao.setPublishingStatus(
-                publishingRecordId,
-                PublishingRecordStatus.QUEUED,
-                bookPublishRequestId);
-
+        final BookPublishRequest bookPublishRequest = BookPublishRequestConverter.toBookPublishRequest(request);
         manager.addRequest(bookPublishRequest);
 
+        var publishingStatusItem = new AtomicReference<>(
+                publishingStatusDao.setPublishingStatus(bookPublishRequest
+                                .getPublishingRecordId(), PublishingRecordStatus.QUEUED,
+                        bookPublishRequest.getBookId())
+        );
+        // if bookId is present in catalog, generate a new record with it's corresponding id in publishing status dao
+        // if BookNotFoundException is caught, log it but don't throw it,
+        // because the incoming request still needs to be added to the queue, just not with the exsiting bookId
+        if (StringUtils.isNotBlank(bookPublishRequest.getBookId())) {
+            try {
+                catalogDao.isExsitingCatalogItem(bookPublishRequest.getBookId())
+                        .ifPresentOrElse(catalogItemVersion -> publishingStatusItem.set(publishingStatusDao
+                                        .setPublishingStatus(
+                                                bookPublishRequest.getPublishingRecordId(),
+                                                PublishingRecordStatus.QUEUED,
+                                                catalogItemVersion.getBookId())
+                        ), () -> {
+                            throw new BookNotFoundException("BookId was present in request, but not found in catalog");
+                        });
+            } catch (BookNotFoundException e) {
+                App.logger.error("Error while checking if book exists", e);
+                throw e;
+            }
+        }
+
         return SubmitBookForPublishingResponse.builder()
-                .withPublishingRecordId(item.getPublishingRecordId())
+                .withPublishingRecordId(publishingStatusItem.get().getPublishingRecordId())
                 .build();
+
     }
 }
-

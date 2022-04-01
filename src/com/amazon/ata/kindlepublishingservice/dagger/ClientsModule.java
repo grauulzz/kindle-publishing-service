@@ -67,6 +67,7 @@ public class ClientsModule {
      *
      * @param catalogDao          the catalog dao
      * @param publishingStatusDao the publishing status dao
+     * @param manager             the manager
      *
      * @return submit book for publishing activity
      */
@@ -83,6 +84,7 @@ public class ClientsModule {
      *
      * @param catalogDao          the catalog dao
      * @param publishingStatusDao the publishing status dao
+     * @param manager             the manager
      *
      * @return the book publish task
      */

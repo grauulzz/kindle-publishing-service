@@ -2,7 +2,7 @@ package com.amazon.ata.kindlepublishingservice.converters;
 
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
-import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.amazon.ata.kindlepublishingservice.publishing.utils.KindlePublishingUtils;
 import com.amazon.ata.recommendationsservice.types.BookGenre;
 
 /**

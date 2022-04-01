@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.amazon.ata.resources.debugging.dependencies.AmazonIdentityServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2022-04-01T02:11:48" hostname="DESKTOP-5B2P3R4" time="0.056">
+  <properties/>
+  <testcase name="validateCustomer_customerIdWhitespace_exceptionRaised()" classname="com.amazon.ata.resources.debugging.dependencies.AmazonIdentityServiceTest" time="0.045"/>
+  <testcase name="validateCustomer_customerIdUnrecognized_returnsFalse()" classname="com.amazon.ata.resources.debugging.dependencies.AmazonIdentityServiceTest" time="0.002"/>
+  <testcase name="validateCustomer_customerIdRecognized_returnsTrue()" classname="com.amazon.ata.resources.debugging.dependencies.AmazonIdentityServiceTest" time="0.004"/>
+  <testcase name="validateCustomer_customerIdEmpty_exceptionRaised()" classname="com.amazon.ata.resources.debugging.dependencies.AmazonIdentityServiceTest" time="0.002"/>
+  <testcase name="validateCustomer_customerIdNull_exceptionRaised()" classname="com.amazon.ata.resources.debugging.dependencies.AmazonIdentityServiceTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

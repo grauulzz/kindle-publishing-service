@@ -122,8 +122,7 @@ public class CatalogDao {
      * @throws DynamoDBMappingException the dynamo db mapping exception
      * @throws BookNotFoundException    the book not found exception
      */
-    public <U> CompletableFuture<CatalogItemVersion> load(String id)
-            throws DynamoDBMappingException, BookNotFoundException {
+    public <U> CompletableFuture<CatalogItemVersion> load(String id) throws BookNotFoundException {
         CatalogItemVersion item = db.load(CatalogItemVersion.class, id);
         if (item == null) {
             throw new BookNotFoundException("Book not found on load from db");

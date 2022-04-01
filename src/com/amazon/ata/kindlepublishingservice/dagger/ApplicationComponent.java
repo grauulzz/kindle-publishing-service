@@ -7,8 +7,8 @@ import com.amazon.ata.kindlepublishingservice.activity.SubmitBookForPublishingAc
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishTask;
-
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishingManager;
+
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import dagger.Component;
 

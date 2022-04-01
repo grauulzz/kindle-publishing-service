@@ -10,6 +10,8 @@ import com.amazon.ata.kindlepublishingservice.models.requests.GetBookRequest;
 import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +26,7 @@ import javax.validation.Valid;
 @RestController
 public class Controller {
     private static final ApplicationComponent component = App.component;
+    private static final Logger LOGGER = LogManager.getLogger(Controller.class);
 
     /**
      * Gets book.
@@ -34,6 +37,7 @@ public class Controller {
      */
     @GetMapping(value = "/books/{id}", produces = "application/json")
     public ResponseEntity<?> getBook(@PathVariable String id) {
+        LOGGER.info("Getting book with id: {}", id);
         GetBookActivity bookActivity = component.provideGetBookActivity();
         GetBookRequest getBookRequest = GetBookRequest.builder().withBookId(id).build();
         return new ResponseEntity<>(bookActivity.execute(getBookRequest), HttpStatus.OK);
@@ -48,6 +52,7 @@ public class Controller {
      */
     @DeleteMapping(value = "/books/{id}", produces = "application/json")
     public ResponseEntity<?> removeBook(@PathVariable String id) {
+        LOGGER.info("Removing book with id: {}", id);
         RemoveBookFromCatalogActivity removeBookFromCatalogActivity = component.provideRemoveBookFromCatalogActivity();
         RemoveBookFromCatalogRequest removeBookFromCatalogRequest = RemoveBookFromCatalogRequest.builder()
                 .withBookId(id)
@@ -66,8 +71,11 @@ public class Controller {
      */
     @PostMapping(value = "/books", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> submitBookForPublishing(@Valid @RequestBody Book book) {
+        LOGGER.info("Submitting book for publishing: {}", book);
         SubmitBookForPublishingActivity activity = component.provideSubmitBookForPublishingActivity();
         SubmitBookForPublishingRequest req = SubmitBookForPublishingRequest.builder().withBook(book).build();
         return new ResponseEntity<>(activity.execute(req), HttpStatus.OK);
     }
+
 }
+

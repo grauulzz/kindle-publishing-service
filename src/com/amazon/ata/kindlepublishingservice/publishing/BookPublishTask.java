@@ -1,21 +1,20 @@
 package com.amazon.ata.kindlepublishingservice.publishing;
 
-import com.amazon.ata.kindlepublishingservice.App;
+
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
-import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
+import com.amazon.ata.kindlepublishingservice.publishing.utils.KindlePublishingUtils;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.platform.commons.util.StringUtils;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
-import org.junit.platform.commons.util.StringUtils;
 
 import static com.amazon.ata.kindlepublishingservice.App.component;
 
@@ -32,11 +31,13 @@ public class BookPublishTask implements Runnable {
     /**
      * Instantiates a new Book publish task.
      *
-     * @param catalogDao          the catalog dao
-     * @param publishingStatusDao the publishing status dao
+     * @param catalogDao            the catalog dao
+     * @param publishingStatusDao   the publishing status dao
+     * @param manager               the manager
      */
     @Inject
-    public BookPublishTask(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao, BookPublishingManager manager) {
+    public BookPublishTask(CatalogDao catalogDao, PublishingStatusDao publishingStatusDao,
+                           BookPublishingManager manager) {
         this.catalogDao = catalogDao;
         this.publishingStatusDao = publishingStatusDao;
         this.manager = manager;
@@ -48,6 +49,7 @@ public class BookPublishTask implements Runnable {
         while (manager.queueHasNextRequest()) {
             BookPublishRequest request = manager.nextRequest();
             if (request == null) {
+                LOGGER.info("Incoming BookPublish Request was null");
                 return;
             }
             String publishingRecordId = request.getPublishingRecordId();
@@ -56,19 +58,17 @@ public class BookPublishTask implements Runnable {
             publishingStatusDao.markInProgress(request, requestBookId);
 
             if (!StringUtils.isBlank(requestBookId)) {
-                CompletableFuture<CatalogItemVersion> getBookFromCatalog =
-                        CompletableFuture.supplyAsync(() -> catalogDao.getBookFromCatalog(requestBookId));
-                try {
-                    CatalogItemVersion item = awaitGetBookFuture(publishingRecordId,
-                            publishingRecordId, getBookFromCatalog);
+                CompletableFuture<CatalogItemVersion> getBookFromCatalog = CompletableFuture
+                        .supplyAsync(() -> catalogDao.getBookFromCatalog(requestBookId));
 
+                CatalogItemVersion item = awaitGetBookFuture(publishingRecordId,
+                        publishingRecordId, getBookFromCatalog);
+
+                if (item != null) {
                     catalogDao.publishNewVersion(request, item);
                     publishingStatusDao.markSuccessful(publishingRecordId, item);
-
-                } catch (InterruptedException | ExecutionException e) {
-                    publishingStatusDao.markFailed(publishingRecordId, requestBookId);
-                    e.printStackTrace();
                 }
+                LOGGER.info("CatalogItem returned null after async getBookFromCatalog call");
             }
 
             String bookId = KindlePublishingUtils.generateBookId();
@@ -85,37 +85,43 @@ public class BookPublishTask implements Runnable {
                                 e.printStackTrace();
                             }
                             publishingStatusDao.markFailed(publishingRecordId, bookId);
-                            throw new BookNotFoundException("Something went terribly wrong");
                         });
-            } catch (DynamoDBMappingException | BookNotFoundException e) {
-                App.logger.error(e.getMessage());
+            } catch (BookNotFoundException e) {
+                LOGGER.info(e.getMessage());
             }
         }
     }
 
     private CatalogItemVersion awaitGetBookFuture(
             String publishingRecordId, String requestBookId, CompletableFuture<CatalogItemVersion> future
-    ) throws ExecutionException, InterruptedException {
+    ) {
         future.whenComplete((currentVersion, throwable) -> {
             if (throwable != null) {
                 publishingStatusDao.markFailed(publishingRecordId, requestBookId);
-                throw new BookNotFoundException(
-                        String.format("Book [%s] not found publishing record [%s] marked failed",
-                                requestBookId, publishingRecordId));
             }
             awaitMarkCurrentVersionInactiveFuture(currentVersion, publishingRecordId);
         });
-        return future.get();
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            LOGGER.info("CatalogItemVersion failed to load from db");
+        }
+        return null;
     }
 
     private void awaitMarkCurrentVersionInactiveFuture(CatalogItemVersion current, String publishingRecordId) {
-        CompletableFuture.supplyAsync(() -> component.provideRemoveBookFromCatalogActivity().execute(
-                RemoveBookFromCatalogRequest.builder().withBookId(current.getBookId()).build())
-        ).thenAccept(markInactiveResponse -> {
-            if (markInactiveResponse.getStatusCode() != 200) {
-                publishingStatusDao.markFailed(publishingRecordId, current.getBookId());
-                throw new BookNotFoundException("Something went terribly wrong");
-            }
-        });
+        CompletableFuture.supplyAsync(() -> component.provideRemoveBookFromCatalogActivity()
+                        .execute(RemoveBookFromCatalogRequest.builder()
+                                .withBookId(current.getBookId())
+                                .build()))
+                .thenAccept(markInactiveResponse -> {
+                    if (markInactiveResponse.getStatusCode() != 200) {
+                        publishingStatusDao.markFailed(publishingRecordId,
+                                current.getBookId());
+                        LOGGER.info(String.format("bookId [%s] failed to mark inactive with http status code [%d] ",
+                                        current.getBookId(), markInactiveResponse.getStatusCode()));
+                    }
+                });
     }
 }
