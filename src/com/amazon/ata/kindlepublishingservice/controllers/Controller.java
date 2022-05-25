@@ -10,8 +10,13 @@ import com.amazon.ata.kindlepublishingservice.models.requests.GetBookRequest;
 import com.amazon.ata.kindlepublishingservice.models.requests.RemoveBookFromCatalogRequest;
 import com.amazon.ata.kindlepublishingservice.models.requests.SubmitBookForPublishingRequest;
 
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.aop.TimedAspect;
+import io.micrometer.core.instrument.MeterRegistry;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +33,10 @@ public class Controller {
     private static final ApplicationComponent component = App.component;
     private static final Logger LOGGER = LogManager.getLogger(Controller.class);
 
+    @Bean
+    public TimedAspect timedAspect(MeterRegistry registry) {
+        return new TimedAspect(registry);
+    }
     /**
      * Gets book.
      *
@@ -35,6 +44,7 @@ public class Controller {
      *
      * @return the book
      */
+    @Timed(value = "get.book", description = "Time taken to return book")
     @GetMapping(value = "/books/{id}", produces = "application/json")
     public ResponseEntity<?> getBook(@PathVariable String id) {
         LOGGER.info("Getting book with id: {}", id);
